@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'seo_title' => 'About Us - Powercut | Precision and Technology in Industrial Cutting',
+    'seo_description' => 'Powercut is the industry\'s leading and trusted solution partner, combining engineering excellence with innovative technologies in the field of special cutting machines.',
+    'page_title' => 'Powercut: Precision and Technology in Industrial Cutting',
+    'page_subtitle' => 'Shaping Tomorrow\'s Cutting Technologies Today',
+    'intro_1' => 'Powercut is the industry\'s leading and trusted solution partner, combining engineering excellence with innovative technologies in the field of special cutting machines. With the high-performance solutions we offer, we bring not only speed but also flawless precision and sustainable efficiency to your production processes.',
+    'intro_2' => 'Aiming for the operational excellence of our customers, Powercut offers high-precision cutting solutions across a wide range from small workshops to large industrial facilities. In every project, we redefine industrial standards by acting on the "Zero Defect" principle.',
+    'why_title' => 'Why Powercut?',
+    'why_1_title' => 'Advanced Technology and Durability',
+    'why_1_text' => 'The cutting solutions we offer are built with the latest engineering software and durable materials to deliver maximum performance even under the most demanding industrial conditions.',
+    'why_2_title' => 'Solutions Tailored to Your Needs',
+    'why_2_text' => 'We don\'t settle for standard solutions. Our expert team is with you to find the right cutting solution for each customer\'s unique needs.',
+    'why_3_title' => 'Uninterrupted Technical Support',
+    'why_3_text' => 'We don\'t just supply equipment; our expert technical team is with you at all times to ensure your production never stops.',
+    'why_4_title' => 'Sustainable Efficiency',
+    'why_4_text' => 'The energy-efficient solutions we offer help minimize your operational costs while reducing your carbon footprint.',
+    'mv_heading' => 'Our Mission & Vision',
+    'mv_subtitle' => 'The values that shape our future',
+    'mission_title' => 'Our Mission',
+    'mission_text' => 'To increase our customers\' competitiveness in the global market and perfect their production processes with our high-quality and innovative cutting technologies.',
+    'vision_title' => 'Our Vision',
+    'vision_text' => 'To become the first brand that comes to mind worldwide when it comes to cutting technologies in the digitalizing industrial world, and to shape the factories of the future by pushing the boundaries of innovation.',
+    'breadcrumb_home' => 'Home',
+    'breadcrumb_about' => 'About Us',
+    'company_title' => 'OUR COMPANY',
+];

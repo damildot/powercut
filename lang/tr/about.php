@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'seo_title' => 'Hakkımızda - Powercut | Endüstriyel Kesimde Hassasiyet ve Teknoloji',
+    'seo_description' => 'Powercut, özel kesim makineleri alanında mühendislik zekasını yenilikçi teknolojilerle birleştiren, sektörün öncü ve güvenilir çözüm ortağıdır.',
+    'page_title' => 'Powercut: Endüstriyel Kesimde Hassasiyet ve Teknoloji Bir Arada',
+    'page_subtitle' => 'Geleceğin Kesim Teknolojilerini Bugünden Şekillendiriyoruz',
+    'intro_1' => 'Powercut, özel kesim makineleri alanında mühendislik zekasını yenilikçi teknolojilerle birleştiren, sektörün öncü ve güvenilir çözüm ortağıdır. Üstün performanslı makinelerimizle, üretim süreçlerinize sadece hız değil; aynı zamanda kusursuz hassasiyet ve sürdürülebilir verimlilik katıyoruz.',
+    'intro_2' => 'Müşterilerimizin operasyonel mükemmelliğini hedefleyen Powercut, küçük atölyelerden dev sanayi kuruluşlarına kadar geniş bir yelpazede yüksek hassasiyetli kesim çözümleri sunar. Her projemizde, "Sıfır Hata" prensibiyle hareket ederek, endüstriyel standartları yeniden tanımlıyoruz.',
+    'why_title' => 'Neden Powercut?',
+    'why_1_title' => 'İleri Teknoloji ve Dayanıklılık',
+    'why_1_text' => 'Makinelerimiz, en zorlu endüstriyel şartlarda dahi maksimum performans sunacak şekilde, en son mühendislik yazılımları ve dayanıklı materyallerle üretilir.',
+    'why_2_title' => 'İhtiyaca Özel Çözümler',
+    'why_2_text' => 'Standart çözümlerle yetinmiyoruz. Her müşterimizin ihtiyacına uygun doğru kesim çözümünü bulmak için uzman ekibimizle yanınızdayız.',
+    'why_3_title' => 'Kesintisiz Teknik Destek',
+    'why_3_text' => 'Sadece bir makine satmıyoruz; satış sonrası uzman teknik ekibimizle üretiminizin duraksamaması için her an yanınızda oluyoruz.',
+    'why_4_title' => 'Sürdürülebilir Verimlilik',
+    'why_4_text' => 'Enerji tasarruflu sistemlerimizle karbon ayak izinizi azaltırken, operasyonel maliyetlerinizi minimuma indiriyoruz.',
+    'mv_heading' => 'Misyonumuz & Vizyonumuz',
+    'mv_subtitle' => 'Geleceğe yön veren değerlerimiz',
+    'mission_title' => 'Misyonumuz',
+    'mission_text' => 'Yüksek kaliteli ve yenilikçi kesim teknolojilerimizle müşterilerimizin küresel pazarda rekabet gücünü artırmak ve üretim süreçlerini mükemmelleştirmek.',
+    'vision_title' => 'Vizyonumuz',
+    'vision_text' => 'Dijitalleşen sanayi dünyasında, kesim teknolojileri denince dünyada akla gelen ilk marka olmak ve inovasyonun sınırlarını zorlayarak geleceğin fabrikalarına yön vermek.',
+    'breadcrumb_home' => 'Anasayfa',
+    'breadcrumb_about' => 'Hakkımızda',
+    'company_title' => 'ŞİRKETİMİZ',
+];

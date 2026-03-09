@@ -1,5 +1,5 @@
 <?php
-
+//panelin konfigürasyon dosyası
 namespace App\Providers\Filament;
 
 use Filament\Http\Middleware\Authenticate;
@@ -28,9 +28,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('Powercut')
+            ->font('Poppins')
+            ->brandLogo(asset('storage/settings/01KD44WXF74YJTFHPGGN2D4775.png'))
+            ->sidebarCollapsibleOnDesktop()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' =>  '#983000FF',
             ])
+           // ->favicon(asset('images/favicon.png'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -41,6 +46,8 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+            ->unsavedChangesAlerts()
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Docs (local only, do not push)
+*.md
+.cursorrules
+.psysh/
