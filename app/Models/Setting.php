@@ -3,9 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget('view_settings'));
+    }
+
     protected $fillable = [
         'site_title',
         'logo_light',
