@@ -158,9 +158,11 @@
                                 @if($post->image)
                                 <div class="post-image">
                                     <a href="{{ blogUrl($routePrefix, 'show', ['slug' => $post->{$slugField}]) }}">
-                                        <img alt="{{ $post->{$imgAltField} ?? $post->{$titleField} }}"
-                                             src="{{ asset('storage/' . $post->image) }}"
-                                             loading="lazy">
+                                        <x-webp-image
+                                            :src="asset('storage/' . $post->image)"
+                                            :alt="$post->{$imgAltField} ?? $post->{$titleField}"
+                                            loading="lazy"
+                                        />
                                     </a>
                                     @if($post->category)
                                     <span class="post-meta-category">
@@ -266,8 +268,11 @@
                             @foreach($sidebarRecent as $rp)
                             <div class="post-thumbnail-entry">
                                 @if($rp->image)
-                                <img alt="{{ $rp->{$imgAltField} ?? $rp->{$titleField} }}"
-                                     src="{{ asset('storage/' . $rp->image) }}" loading="lazy">
+                                <x-webp-image
+                                    :src="asset('storage/' . $rp->image)"
+                                    :alt="$rp->{$imgAltField} ?? $rp->{$titleField}"
+                                    loading="lazy"
+                                />
                                 @endif
                                 <div class="post-thumbnail-content">
                                     <a href="{{ blogUrl($routePrefix, 'show', ['slug' => $rp->{$slugField}]) }}">
