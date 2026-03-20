@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contact form notification recipient
+    |--------------------------------------------------------------------------
+    |
+    | İletişim formu gönderildiğinde bildirim e-postası bu adrese gider.
+    | Boş bırakılırsa ContactSetting içindeki e-posta, o da yoksa MAIL_FROM_ADDRESS kullanılır.
+    |
+    */
+
+    'contact_to' => env('MAIL_CONTACT_TO'),
+
 ];
