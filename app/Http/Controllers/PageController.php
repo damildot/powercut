@@ -16,7 +16,9 @@ class PageController extends Controller
 
     public function kvkk()
     {
-        App::setLocale('tr');
-        return view('frontend.pages.kvkk');
+        $locale = request()->segment(1) === 'en' ? 'en' : 'tr';
+        App::setLocale($locale);
+
+        return view('frontend.pages.kvkk', compact('locale'));
     }
 }
