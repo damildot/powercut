@@ -6,13 +6,16 @@
 @php
     $locale = $locale ?? 'tr';
     $localeParam = $locale === 'tr' ? [] : ['locale' => $locale];
+    $homeUrl = $locale === 'en' ? route('home.en') : route('home');
     $cs = $contactSettings ?? null;
-    $addr = $cs?->{"address_{$locale}"} ?? $cs?->address_tr ?? $settings->address ?? '';
-    $hours = $cs?->{"working_hours_{$locale}"} ?? $cs?->working_hours_tr ?? '';
-    $waNumber = $cs?->whatsapp_number ?? $settings->whatsapp_phone ?? null;
-    $waMessage = $cs?->{"whatsapp_default_message_{$locale}"} ?? $cs?->whatsapp_default_message_tr ?? __('Merhaba');
-    $map = $cs?->map_embed_url ?? $settings->google_maps_embed ?? '';
-    $social = $cs?->social_links ?? [
+    $csPhone = data_get($cs, 'phone');
+    $csEmail = data_get($cs, 'email');
+    $addr = data_get($cs, "address_{$locale}") ?? data_get($cs, 'address_tr') ?? $settings->address ?? '';
+    $hours = data_get($cs, "working_hours_{$locale}") ?? data_get($cs, 'working_hours_tr') ?? '';
+    $waNumber = data_get($cs, 'whatsapp_number') ?? $settings->whatsapp_phone ?? null;
+    $waMessage = data_get($cs, "whatsapp_default_message_{$locale}") ?? data_get($cs, 'whatsapp_default_message_tr') ?? __('contact.whatsapp_default_message');
+    $map = data_get($cs, 'map_embed_url') ?? $settings->google_maps_embed ?? '';
+    $social = data_get($cs, 'social_links') ?? [
         'facebook' => $settings->facebook ?? null,
         'instagram' => $settings->instagram ?? null,
         'linkedin' => $settings->linkedin ?? null,
@@ -127,7 +130,7 @@
         </div>
         <div class="breadcrumb">
             <ul>
-                <li><a href="{{ route('home') }}">{{ __('contact.breadcrumb_home') }}</a></li>
+                <li><a href="{{ $homeUrl }}">{{ __('contact.breadcrumb_home') }}</a></li>
                 <li class="active"><a href="#">{{ __('contact.breadcrumb_contact') }}</a></li>
             </ul>
         </div>
@@ -142,11 +145,11 @@
             <div class="col-lg-4">
                 <h4>{{ __('contact.info_title') }}</h4>
                     <div class="m-b-20">
-                        @if($cs?->phone)
-                            <p><strong>{{ __('contact.phone') }}:</strong> <a href="tel:{{ preg_replace('/\\D+/', '', $cs->phone) }}">{{ $cs->phone }}</a></p>
+                        @if($csPhone)
+                            <p><strong>{{ __('contact.phone') }}:</strong> <a href="tel:{{ preg_replace('/\\D+/', '', $csPhone) }}">{{ $csPhone }}</a></p>
                         @endif
-                        @if($cs?->email)
-                            <p><strong>{{ __('contact.email') }}:</strong> <a href="mailto:{{ $cs->email }}">{{ $cs->email }}</a></p>
+                        @if($csEmail)
+                            <p><strong>{{ __('contact.email') }}:</strong> <a href="mailto:{{ $csEmail }}">{{ $csEmail }}</a></p>
                         @endif
                         @if($addr)
                             <p><strong>{{ __('contact.address') }}:</strong><br>{!! nl2br(e($addr)) !!}</p>
@@ -161,7 +164,7 @@
                             <ul>
                                 @foreach($social as $network => $link)
                                     @if($link)
-                                    <li class="social-{{ strtolower($network) }}"><a href="{{ $link }}" target="_blank" rel="noopener"><i class="fab fa-{{ strtolower($network) }}"></i></a></li>
+                                    <li class="social-{{ strtolower($network) }}"><a href="{{ $link }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($network) }}"><i class="fab fa-{{ strtolower($network) }}"></i></a></li>
                                     @endif
                                 @endforeach
                             </ul>
@@ -172,7 +175,7 @@
                         <div class="m-t-20">
                             <a class="btn btn-primary btn-block btn-whatsapp" target="_blank" rel="noopener"
                                href="https://wa.me/{{ preg_replace('/\\D+/', '', $waNumber) }}?text={{ urlencode($waMessage) }}">
-                                <i class="fab fa-whatsapp"></i> {{ __('WhatsApp') }}
+                                <i class="fab fa-whatsapp"></i> {{ __('contact.whatsapp') }}
                             </a>
                         </div>
                     @endif
@@ -200,15 +203,15 @@
                     <div class="row">
                         <div class="form-group col-md-6">
                             <label for="full_name">{{ __('contact.form_name') }}</label>
-                            <input type="text" name="full_name" id="full_name" class="form-control required name" value="{{ old('full_name') }}" required>
+                            <input type="text" name="full_name" id="full_name" class="form-control name" value="{{ old('full_name') }}" required autocomplete="name">
                         </div>
                         <div class="form-group col-md-6">
                             <label for="email">{{ __('contact.form_email') }}</label>
-                            <input type="email" name="email" id="email" class="form-control required email" value="{{ old('email') }}" required>
+                            <input type="email" name="email" id="email" class="form-control email" value="{{ old('email') }}" required autocomplete="email">
                         </div>
                         <div class="form-group col-md-6">
                             <label for="phone">{{ __('contact.form_phone') }}</label>
-                            <input type="text" name="phone" id="phone" class="form-control" value="{{ old('phone') }}">
+                            <input type="tel" name="phone" id="phone" class="form-control" value="{{ old('phone') }}" autocomplete="tel">
                         </div>
                         <div class="form-group col-md-6">
                             <label for="subject">{{ __('contact.form_subject') }}</label>
@@ -218,7 +221,7 @@
 
                     <div class="form-group">
                         <label for="message">{{ __('contact.form_message') }}</label>
-                        <textarea name="message" id="message" rows="5" class="form-control required" required>{{ old('message') }}</textarea>
+                        <textarea name="message" id="message" rows="5" class="form-control" required>{{ old('message') }}</textarea>
                     </div>
                     <button class="btn btn-primary" type="submit"><i class="icon-check"></i> {{ __('contact.form_send') }}</button>
                 </form>
