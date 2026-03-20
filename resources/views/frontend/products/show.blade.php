@@ -3,6 +3,9 @@
 
 @php
     $isEn = app()->getLocale() === 'en';
+    $homeRoute = $isEn ? 'home.en' : 'home';
+    $productsIndexRoute = $isEn ? 'products.en.index' : 'products.index';
+    $productsShowRoute = $isEn ? 'products.en.show' : 'products.show';
     $nameField = $isEn ? 'name_en' : 'name_tr';
     $slugField = $isEn ? 'slug_en' : 'slug_tr';
     $subtitleField = $isEn ? 'subtitle_en' : 'subtitle_tr';
@@ -24,13 +27,13 @@
         ?? Str::limit(strip_tags($productShortDesc ?: $productDescription ?: ''), 160);
 
     $keywords = trim($productName . ', ' . ($categoryName ?? '') . ', metal kesim, şerit testere, endüstriyel makina');
-    $productUrl = route('products.show', $product->slug_tr);
+    $productUrl = route($productsShowRoute, $product->{$slugField} ?? $product->slug_tr);
 
     $imageItems = $product->media ? $product->media->where('media_type', 'image') : collect();
     $videoItems = $product->media ? $product->media->where('media_type', 'video') : collect();
     $primaryImagePath = $product->thumbnail ?: ($imageItems->first()->path ?? null);
     $productImage = $primaryImagePath ? asset('storage/' . $primaryImagePath) : null;
-    $contactUrl = $isEn ? url('/en/contact') : url('/iletisim');
+    $contactUrl = $isEn ? route('contact.index.locale', ['locale' => 'en']) : route('contact.index.tr');
     $hasDescription = filled(trim(strip_tags((string) ($productDescription ?? ''))));
     $hasVideos = $videoItems->isNotEmpty();
     $hasDocuments = $product->documents && $product->documents->isNotEmpty();
@@ -115,10 +118,10 @@
     <div class="container">
         <div class="breadcrumb m-b-20">
             <ul>
-                <li><a href="{{ route('home') }}">{{ __('products.detail.home') }}</a></li>
-                <li><a href="{{ route('products.index') }}">{{ __('products.detail.products') }}</a></li>
+                <li><a href="{{ route($homeRoute) }}">{{ __('products.detail.home') }}</a></li>
+                <li><a href="{{ route($productsIndexRoute) }}">{{ __('products.detail.products') }}</a></li>
                 @if($categoryName && $categorySlug)
-                <li><a href="{{ route('products.index', $categorySlug) }}">{{ $categoryName }}</a></li>
+                <li><a href="{{ route($productsIndexRoute, $categorySlug) }}">{{ $categoryName }}</a></li>
                 @endif
                 <li class="active"><a href="#">{{ $productName }}</a></li>
             </ul>
@@ -145,14 +148,26 @@
                     @if($imageItems->isNotEmpty() || $product->thumbnail)
                         <div class="carousel dots-inside arrows-visible product-detail-carousel" data-items="1">
                             @if($imageItems->isNotEmpty())
-                                @foreach($imageItems as $media)
+                                @foreach($imageItems->values() as $mediaIndex => $media)
                                 <div>
-                                    <img src="{{ asset('storage/' . $media->path) }}" alt="{{ $media->alt_text ?? $productName }}" class="product-detail-main-img">
+                                    <x-webp-image
+                                        :src="asset('storage/' . $media->path)"
+                                        :alt="$media->alt_text ?? $productName"
+                                        class="product-detail-main-img"
+                                        :loading="$mediaIndex === 0 ? 'eager' : 'lazy'"
+                                        decoding="async"
+                                    />
                                 </div>
                                 @endforeach
                             @else
                                 <div>
-                                    <img src="{{ asset('storage/' . $product->thumbnail) }}" alt="{{ $productName }}" class="product-detail-main-img">
+                                    <x-webp-image
+                                        :src="asset('storage/' . $product->thumbnail)"
+                                        :alt="$productName"
+                                        class="product-detail-main-img"
+                                        loading="eager"
+                                        decoding="async"
+                                    />
                                 </div>
                             @endif
                         </div>
@@ -336,9 +351,9 @@
 
                     <div class="col-md-6 col-xl-3 m-b-30">
                         <article class="related-product-card h-100">
-                            <a href="{{ route('products.show', $item->slug_tr) }}" class="related-product-media">
+                            <a href="{{ route($productsShowRoute, $item->{$slugField} ?? $item->slug_tr) }}" class="related-product-media">
                                 @if($itemImg)
-                                    <img src="{{ $itemImg }}" alt="{{ $itemName }}" loading="lazy" class="related-product-img">
+                                    <x-webp-image :src="$itemImg" :alt="$itemName" loading="lazy" decoding="async" class="related-product-img" />
                                 @else
                                     <div class="related-product-placeholder">
                                         <i class="icon-camera" aria-hidden="true"></i>
@@ -346,7 +361,7 @@
                                 @endif
                             </a>
                             <div class="related-product-body">
-                                <h4><a href="{{ route('products.show', $item->slug_tr) }}">{{ $itemName }}</a></h4>
+                                <h4><a href="{{ route($productsShowRoute, $item->{$slugField} ?? $item->slug_tr) }}">{{ $itemName }}</a></h4>
                             </div>
                         </article>
                     </div>
