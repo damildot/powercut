@@ -108,6 +108,18 @@
         color: #FFA500 !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
+    #blog.single-post .post-content h2 {
+        font-size: 1.75rem !important;
+        line-height: 1.35 !important;
+        font-weight: 700;
+        margin: 2rem 0 1rem;
+        color: #1e2022;
+    }
+    @media (max-width: 767.98px) {
+        #blog.single-post .post-content h2 {
+            font-size: 1.45rem !important;
+        }
+    }
 </style>
 @endpush
 
@@ -144,8 +156,12 @@
                             <div class="post-item-wrap">
                                 @if($post->image)
                                 <div class="post-image">
-                                    <img alt="{{ $post->{$imgAltField} ?? $post->{$titleField} }}"
-                                         src="{{ asset('storage/' . $post->image) }}">
+                                    <x-webp-image
+                                        :src="asset('storage/' . $post->image)"
+                                        :alt="$post->{$imgAltField} ?? $post->{$titleField}"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </div>
                                 @endif
 
@@ -154,7 +170,7 @@
                                     <div class="post-meta">
                                         <span class="post-meta-date">
                                             <i class="fa fa-calendar-o"></i>
-                                            {{ $post->published_at?->format('d F Y') }}
+                                            {{ $post->published_at?->format('d.m.Y') }}
                                         </span>
                                         @if($post->category)
                                         <span class="post-meta-category">
@@ -171,14 +187,6 @@
                                         </span>
                                         @endif
 
-                                        {{-- Share Button --}}
-                                        <div class="post-meta-share">
-                                            <a class="btn btn-xs btn-slide btn-whatsapp"
-                                               href="https://wa.me/?text={{ urlencode($post->{$titleField} . ' - ' . url()->current()) }}"
-                                               target="_blank" rel="noopener" data-width="104">
-                                                <i class="fab fa-whatsapp"></i><span>{{ __('blog.share_whatsapp') }}</span>
-                                            </a>
-                                        </div>
                                     </div>
 
                                     {{-- Excerpt --}}
@@ -249,8 +257,12 @@
                             @foreach($recentPosts as $rp)
                             <div class="post-thumbnail-entry">
                                 @if($rp->image)
-                                <img alt="{{ $rp->{$imgAltField} ?? $rp->{$titleField} }}"
-                                     src="{{ asset('storage/' . $rp->image) }}" loading="lazy">
+                                <x-webp-image
+                                    :src="asset('storage/' . $rp->image)"
+                                    :alt="$rp->{$imgAltField} ?? $rp->{$titleField}"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
                                 @endif
                                 <div class="post-thumbnail-content">
                                     <a href="{{ blogShowUrl($routePrefix, 'show', ['slug' => $rp->{$slugField}]) }}">
