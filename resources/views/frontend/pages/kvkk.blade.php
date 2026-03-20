@@ -2,7 +2,13 @@
 
 @section('title', __('kvkk.seo_title'))
 @section('meta_description', __('kvkk.seo_description'))
-@section('canonical', route('kvkk'))
+@section('canonical', ($locale ?? app()->getLocale()) === 'en' ? route('kvkk.en') : route('kvkk'))
+
+@php
+    $isEn = ($locale ?? app()->getLocale()) === 'en';
+    $homeUrl = $isEn ? route('home.en') : route('home');
+    $contactUrl = $isEn ? route('contact.index.locale', ['locale' => 'en']) : route('contact.index.tr');
+@endphp
 
 @section('content')
     {{-- Page Title --}}
@@ -14,7 +20,7 @@
             </div>
             <div class="breadcrumb">
                 <ul>
-                    <li><a href="{{ url('/') }}" class="text-light">{{ __('kvkk.breadcrumb_home') }}</a></li>
+                    <li><a href="{{ $homeUrl }}" class="text-light">{{ __('kvkk.breadcrumb_home') }}</a></li>
                     <li class="active"><a href="#" class="text-light">{{ __('kvkk.breadcrumb_page') }}</a></li>
                 </ul>
             </div>
@@ -37,7 +43,7 @@
                     @endforeach
 
                     <div class="mt-5 pt-4">
-                        <a href="{{ url('/iletisim') }}" class="btn btn-primary">
+                        <a href="{{ $contactUrl }}" class="btn btn-primary">
                             {{ __('nav.contact') }}
                         </a>
                     </div>
