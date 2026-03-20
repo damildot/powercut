@@ -25,12 +25,104 @@
     @stack('head')
     {{-- Document Title --}}
     <title>@yield('title', $settings->site_title ?? 'POWERCUT')</title>
+
+    {{-- Global JSON-LD: Organization + WebSite (tüm sayfalar) --}}
+    @php
+        $schemaSiteName = $settings->site_title ?: config('app.name', 'POWERCUT');
+        $schemaBase = rtrim(url('/'), '/');
+        $schemaOrgId = $schemaBase . '#organization';
+        $schemaWebId = $schemaBase . '#website';
+
+        $schemaLogoPath = $settings->logo_light ?: $settings->logo_dark;
+        $schemaLogoUrl = $schemaLogoPath ? asset('storage/' . ltrim($schemaLogoPath, '/')) : null;
+
+        $schemaSameAs = array_values(array_filter([
+            $settings->facebook ?? null,
+            $settings->instagram ?? null,
+            $settings->linkedin ?? null,
+            $settings->youtube ?? null,
+        ], static fn ($u) => is_string($u) && $u !== ''));
+
+        $schemaLocale = app()->getLocale();
+        $schemaSiteDescription = $schemaLocale === 'en'
+            ? ($settings->seo_description_en ?: $settings->seo_description_tr)
+            : ($settings->seo_description_tr ?: $settings->seo_description_en);
+        $schemaSiteDescription = $schemaSiteDescription ? trim(preg_replace('/\s+/u', ' ', strip_tags($schemaSiteDescription))) : null;
+
+        $schemaOrganization = [
+            '@type' => 'Organization',
+            '@id' => $schemaOrgId,
+            'name' => $schemaSiteName,
+            'url' => $schemaBase . '/',
+        ];
+
+        if ($schemaLogoUrl) {
+            $schemaOrganization['logo'] = [
+                '@type' => 'ImageObject',
+                'url' => $schemaLogoUrl,
+            ];
+        }
+
+        if ($schemaSameAs !== []) {
+            $schemaOrganization['sameAs'] = $schemaSameAs;
+        }
+
+        if (! empty($settings->email) || ! empty($settings->phone)) {
+            $schemaContactPoint = [
+                '@type' => 'ContactPoint',
+                'contactType' => 'customer support',
+                'availableLanguage' => ['Turkish', 'English'],
+            ];
+            if (! empty($settings->phone)) {
+                $schemaContactPoint['telephone'] = $settings->phone;
+            }
+            if (! empty($settings->email)) {
+                $schemaContactPoint['email'] = $settings->email;
+            }
+            $schemaOrganization['contactPoint'] = [$schemaContactPoint];
+        }
+
+        if (! empty($settings->address)) {
+            $schemaOrganization['address'] = [
+                '@type' => 'PostalAddress',
+                'streetAddress' => trim(preg_replace('/\s+/u', ' ', strip_tags($settings->address))),
+            ];
+        }
+
+        $schemaWebsite = [
+            '@type' => 'WebSite',
+            '@id' => $schemaWebId,
+            'url' => $schemaBase . '/',
+            'name' => $schemaSiteName,
+            'publisher' => ['@id' => $schemaOrgId],
+            'inLanguage' => ['tr-TR', 'en-US'],
+        ];
+
+        if ($schemaSiteDescription) {
+            $schemaWebsite['description'] = $schemaSiteDescription;
+        }
+
+        $schemaLdGlobal = [
+            '@context' => 'https://schema.org',
+            '@graph' => [$schemaOrganization, $schemaWebsite],
+        ];
+    @endphp
+    <script type="application/ld+json">
+        {!! json_encode($schemaLdGlobal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
+    </script>
     
-    {{-- Stylesheets (Polo bundle) --}}
-    <link href="{{ asset('assets/polo/css/plugins.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/polo/css/style.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/polo/css/theme.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/polo/css/custom.css') }}" rel="stylesheet">
+    @php
+        $poloAssetV = static function (string $relativePublicPath): int {
+            $path = public_path($relativePublicPath);
+
+            return is_file($path) ? (int) filemtime($path) : time();
+        };
+    @endphp
+    {{-- Stylesheets (Polo bundle) — v= cache bust after deploy --}}
+    <link href="{{ asset('assets/polo/css/plugins.css') }}?v={{ $poloAssetV('assets/polo/css/plugins.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/polo/css/style.css') }}?v={{ $poloAssetV('assets/polo/css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/polo/css/theme.css') }}?v={{ $poloAssetV('assets/polo/css/theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/polo/css/custom.css') }}?v={{ $poloAssetV('assets/polo/css/custom.css') }}" rel="stylesheet">
     
     {{-- Custom Styles --}}
     <style>
@@ -110,7 +202,31 @@
             box-shadow: 0 12px 24px rgba(0,0,0,0.25);
         }
 
-        /* Cookie consent */
+        /* Header menü font */
+        #header #mainMenu nav > ul > li > a { font-size: 14px; }
+
+        /* Slider ok butonları: küçült, header/dropdown altında, şık */
+        #slider.inspiro-slider .flickity-button {
+            width: 44px !important; height: 44px !important; line-height: 44px !important;
+            z-index: 50 !important;
+            background: rgba(0, 0, 0, 0.35) !important;
+            border-radius: 50%;
+            transition: background 0.25s ease, transform 0.2s ease;
+        }
+        #slider.inspiro-slider .flickity-button:hover {
+            background: rgba(0, 0, 0, 0.55) !important;
+            transform: scale(1.05);
+        }
+        #slider.inspiro-slider .flickity-button::before {
+            font-size: 18px !important;
+            line-height: 44px !important;
+        }
+        @media (max-width: 991.98px) {
+            #slider.inspiro-slider .flickity-button.next { right: 6px !important; }
+            #slider.inspiro-slider .flickity-button.previous { left: 6px !important; }
+        }
+
+        /* Cookie consent - üstte olmalı (WhatsApp'ın üzerinde) */
         .cookie-consent {
             position: fixed;
             bottom: 0;
@@ -119,7 +235,7 @@
             background: rgba(0,0,0,0.9);
             color: #fff;
             padding: 12px 16px;
-            z-index: 998;
+            z-index: 10000;
         }
         .cookie-consent .cookie-content {
             display: flex;
@@ -170,8 +286,9 @@
     {{-- Floating WhatsApp --}}
     @php
         $whatsappNumber = $settings->whatsapp_phone ?? null;
+        $whatsappMessage = __('contact.whatsapp_default_message');
         $whatsappLink = $whatsappNumber
-            ? 'https://wa.me/' . preg_replace('/\\D+/', '', $whatsappNumber)
+            ? 'https://wa.me/' . preg_replace('/\\D+/', '', $whatsappNumber) . '?text=' . urlencode($whatsappMessage)
             : null;
     @endphp
     @if($whatsappLink)
@@ -183,20 +300,19 @@
     {{-- Cookie Consent --}}
     <div id="cookie-consent" class="cookie-consent d-none">
         <div class="cookie-content">
-            <p>Site deneyimini iyileştirmek için çerez kullanıyoruz. Devam etmeden önce onaylar mısınız?</p>
+            <p>{{ __('cookie.message') }}</p>
             <div class="cookie-actions">
-                <button class="btn btn-primary btn-sm" id="cookie-accept">Kabul Et</button>
-                <a class="btn btn-light btn-sm" href="{{ app()->getLocale() === 'en' ? route('privacy.en') : route('privacy') }}">Detay</a>
+                <button class="btn btn-primary btn-sm" id="cookie-accept">{{ __('cookie.accept') }}</button>
+                <button class="btn btn-outline-light btn-sm" id="cookie-reject">{{ __('cookie.reject') }}</button>
+                <a class="btn btn-light btn-sm" href="{{ app()->getLocale() === 'en' ? route('privacy.en') : route('privacy') }}">{{ __('cookie.details') }}</a>
             </div>
         </div>
     </div>
     
-    {{-- Plugins --}}
-    <script src="{{ asset('assets/polo/js/jquery.js') }}"></script>
-    <script src="{{ asset('assets/polo/js/plugins.js') }}"></script>
-    
-    {{-- Template Functions --}}
-    <script src="{{ asset('assets/polo/js/functions.js') }}"></script>
+    {{-- Polo JS: defer = parse sırasında indirilir, sıra korunur (jQuery → plugins → functions), DOMContentLoaded bütün defer’lerden sonra --}}
+    <script src="{{ asset('assets/polo/js/jquery.js') }}?v={{ $poloAssetV('assets/polo/js/jquery.js') }}" defer></script>
+    <script src="{{ asset('assets/polo/js/plugins.js') }}?v={{ $poloAssetV('assets/polo/js/plugins.js') }}" defer></script>
+    <script src="{{ asset('assets/polo/js/functions.js') }}?v={{ $poloAssetV('assets/polo/js/functions.js') }}" defer></script>
     
     {{-- Custom --}}
     <script>
@@ -204,6 +320,7 @@
             // Cookie consent & deferred analytics
             const banner = document.getElementById('cookie-consent');
             const acceptBtn = document.getElementById('cookie-accept');
+            const rejectBtn = document.getElementById('cookie-reject');
             const CONSENT_KEY = 'cookie_consent';
             const consent = localStorage.getItem(CONSENT_KEY);
 
@@ -233,6 +350,11 @@
                 localStorage.setItem(CONSENT_KEY, 'accepted');
                 banner.classList.add('d-none');
                 loadAnalytics();
+            });
+
+            rejectBtn?.addEventListener('click', function() {
+                localStorage.setItem(CONSENT_KEY, 'rejected');
+                banner.classList.add('d-none');
             });
         })();
     </script>
