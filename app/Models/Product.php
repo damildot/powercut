@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache;
+
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Brand;
 use App\Models\ProductMedia;
@@ -12,6 +14,14 @@ use App\Models\ProductDocument;
 class Product extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            Cache::forget('view_global_categories');
+            Cache::forget('view_uncategorized_count');
+        });
+    }
 
     protected $casts = [
     'specifications_tr' => 'array', // JSON verisini Array yapar
