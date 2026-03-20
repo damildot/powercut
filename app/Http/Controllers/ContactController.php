@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactFormSubmitted;
 use App\Models\ContactMessage;
 use App\Models\ContactSetting;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
@@ -19,15 +22,15 @@ class ContactController extends Controller
         $settings = Setting::first();
 
         // SEO
+        $seoTitleKey = 'seo_title_'.$locale;
+        $seoDescKey = 'seo_description_'.$locale;
         $title = $this->t(
-            $contactSettings?->{"seo_title_{$locale}"} ?? $settings?->{"seo_title_{$locale}"} ?? null,
-            $locale,
-            default: __('contact.meta_title')
+            data_get($contactSettings, $seoTitleKey) ?? data_get($settings, $seoTitleKey),
+            __('contact.meta_title')
         );
         $description = $this->t(
-            $contactSettings?->{"seo_description_{$locale}"} ?? $settings?->{"seo_description_{$locale}"} ?? null,
-            $locale,
-            default: __('contact.meta_description')
+            data_get($contactSettings, $seoDescKey) ?? data_get($settings, $seoDescKey),
+            __('contact.meta_description')
         );
 
         return view('frontend.contact', [
@@ -50,21 +53,40 @@ class ContactController extends Controller
         }
 
         $data = $request->validate([
-            'full_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'subject' => 'nullable|string|max:255',
-            'message' => 'required|string|max:5000',
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        ContactMessage::create([
+        $contactMessage = ContactMessage::create([
+            'full_name' => $data['full_name'],
             'name' => $data['full_name'],
-            ...$data,
+            'email' => $data['email'],
+            'phone' => blank($data['phone'] ?? null) ? null : $data['phone'],
+            'subject' => blank($data['subject'] ?? null) ? null : $data['subject'],
+            'message' => $data['message'],
             'locale' => $locale,
             'status' => 'new',
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
+
+        $to = config('mail.contact_to')
+            ?: ContactSetting::query()->value('email')
+            ?: config('mail.from.address');
+
+        if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            try {
+                Mail::to($to)->send(new ContactFormSubmitted($contactMessage));
+            } catch (\Throwable $e) {
+                Log::error('Contact form mail failed', [
+                    'to' => $to,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return back()->with('success', __('contact.success'));
     }
@@ -76,8 +98,8 @@ class ContactController extends Controller
         return in_array($candidate, ['tr', 'en']) ? $candidate : 'tr';
     }
 
-    private function t(?string $value, string $locale, string $default = ''): string
+    private function t(?string $value, string $default = ''): string
     {
-        return $value ?: $default;
+        return $value !== null && $value !== '' ? $value : $default;
     }
 }
