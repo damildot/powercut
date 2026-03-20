@@ -60,6 +60,9 @@ class ProductController extends Controller
 
     public function show(string $slug)
     {
+        $isEn = app()->getLocale() === 'en';
+        $slugField = $isEn ? 'slug_en' : 'slug_tr';
+
         $product = Product::with([
                 'category',
                 'brand',
@@ -67,7 +70,10 @@ class ProductController extends Controller
                 'specifications',
                 'documents'
             ])
-            ->where('slug_tr', $slug)
+            ->where(function ($query) use ($slugField, $slug) {
+                $query->where($slugField, $slug)
+                    ->orWhere('slug_tr', $slug);
+            })
             ->where('is_active', true)
             ->firstOrFail();
 
