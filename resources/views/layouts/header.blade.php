@@ -66,11 +66,100 @@
     .social-icons ul li.social-instagram a:hover i {
         color: #ffffff !important;
     }
+
+    .header-extras .lang-switcher-dropdown > a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .header-extras .lang-switcher-dropdown .lang-current {
+        position: static !important;
+        font-size: 11px;
+        line-height: 1;
+        letter-spacing: 0.3px;
+        opacity: 1;
+    }
+
+    .header-extras .lang-switcher-mobile-list {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 999px;
+        background: rgba(26, 30, 36, 0.12);
+        border: 1px solid rgba(26, 30, 36, 0.2);
+        backdrop-filter: blur(4px);
+    }
+
+    .header-extras .lang-switcher-mobile-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        line-height: 1;
+        text-transform: uppercase;
+        color: #000 !important;
+        background: transparent;
+        border: 1px solid transparent;
+        box-shadow: none;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .header-extras .lang-switcher-mobile-link.is-active {
+        color: #fff !important;
+        background: linear-gradient(180deg, #f3b600 0%, #cd9200 100%);
+        border-color: rgba(144, 96, 0, 0.7);
+        box-shadow: 0 2px 8px rgba(145, 98, 0, 0.36);
+    }
+
+    .header-extras .lang-switcher-mobile-link:hover,
+    .header-extras .lang-switcher-mobile-link:focus-visible {
+        color: #1f2329 !important;
+        background-color: rgba(255, 255, 255, 0.72);
+        border-color: rgba(40, 45, 52, 0.28);
+        text-decoration: none;
+        outline: none;
+    }
+
+    .header-extras .lang-switcher-mobile-link.is-active:hover,
+    .header-extras .lang-switcher-mobile-link.is-active:focus-visible {
+        color: #fff !important;
+        background: linear-gradient(180deg, #e7ad00 0%, #bd8700 100%);
+        border-color: rgba(126, 84, 0, 0.85);
+        box-shadow: 0 2px 8px rgba(134, 90, 0, 0.45);
+    }
+
+    @media (max-width: 991.98px) {
+        .header-extras > ul > li.lang-switcher-item {
+            position: relative;
+            z-index: 1200;
+        }
+
+        .mainMenu-open #header .header-extras,
+        .mainMenu-open #header .header-extras .lang-switcher-dropdown,
+        .mainMenu-open #header .header-extras .lang-switcher-mobile-list {
+            overflow: visible;
+            pointer-events: auto;
+        }
+    }
 </style>
 
 @php
     $activeLocale = app()->getLocale();
     $isEn = $activeLocale === 'en';
+    $homeUrl = $isEn ? route('home.en') : route('home');
+    $productsIndexRoute = $isEn ? 'products.en.index' : 'products.index';
+    $productsShowRoute = $isEn ? 'products.en.show' : 'products.show';
+    $categorySlugField = $isEn ? 'slug_en' : 'slug_tr';
+    $categoryNameField = $isEn ? 'name_en' : 'name_tr';
 
     $trSwitchUrl = url('/iletisim');
     $enSwitchUrl = url('/en/contact');
@@ -106,11 +195,26 @@
     } elseif (in_array($currentRouteName, ['home', 'home.en'], true)) {
         $trSwitchUrl = route('home');
         $enSwitchUrl = route('home.en');
+    } elseif (in_array($currentRouteName, ['products.index', 'products.en.index'], true)) {
+        $slug = request()->route('slug');
+        $category = $slug
+            ? \App\Models\Category::where('slug_tr', $slug)->orWhere('slug_en', $slug)->first()
+            : null;
+
+        $trSlug = $category?->slug_tr ?? ($slug === 'other' ? 'diger' : $slug);
+        $enSlug = $category?->slug_en ?? ($slug === 'diger' ? 'other' : $slug);
+
+        $trSwitchUrl = $trSlug ? route('products.index', ['slug' => $trSlug]) : route('products.index');
+        $enSwitchUrl = $enSlug ? route('products.en.index', ['slug' => $enSlug]) : route('products.en.index');
+    } elseif (in_array($currentRouteName, ['products.show', 'products.en.show'], true)) {
+        $slug = request()->route('slug');
+        $product = \App\Models\Product::where('slug_tr', $slug)->orWhere('slug_en', $slug)->first();
+
+        $trSwitchUrl = route('products.show', ['slug' => $product?->slug_tr ?? $slug]);
+        $enSwitchUrl = route('products.en.show', ['slug' => $product?->slug_en ?? $product?->slug_tr ?? $slug]);
     }
 
     $blogRoutePrefix = $isEn ? 'blog.en.' : 'blog.';
-    $blogCatSlugField = $isEn ? 'slug_en' : 'slug_tr';
-    $blogCatNameField = $isEn ? 'name_en' : 'name_tr';
     $contactNavUrl = $isEn ? url('/en/contact') : url('/iletisim');
 @endphp
 
@@ -149,10 +253,10 @@
         <div class="container">
             <!--Logo-->
             <div id="logo">
-                <a href="{{ url('/') }}">
+                <a href="{{ $homeUrl }}">
                     @if(!empty($settings->favicon))
                         <span class="logo-default">
-                            <img src="{{ asset('storage/' . $settings->favicon) }}" alt="{{ $settings->site_title ?? 'POWERCUT' }}" style="max-height: 60px;">
+                            <x-webp-image :src="asset(path: 'storage/' . $settings->favicon)" :alt="$settings->site_title ?? 'POWERCUT'" style="max-height: 60px;" />
                         </span>
                     @else
                         <span class="logo-default">{{ $settings->site_title ?? 'POWERCUT' }}</span>
@@ -160,7 +264,7 @@
                     
                     @if(!empty($settings->favicon))
                         <span class="logo-dark">
-                            <img src="{{ asset('storage/' . $settings->favicon) }}" alt="{{ $settings->site_title ?? 'POWERCUT' }}" style="max-height: 60px;">
+                            <x-webp-image :src="asset('storage/' . $settings->favicon)" :alt="$settings->site_title ?? 'POWERCUT'" style="max-height: 60px;" />
                         </span>
                     @else
                         <span class="logo-dark">{{ $settings->site_title ?? 'POWERCUT' }}</span>
@@ -182,13 +286,22 @@
                     <!-- <li>
                         <a id="btn-search" href="#"> <i class="icon-search"></i></a>
                     </li> -->
-                    <li>
-                        <div class="p-dropdown">
-                            <a href="#"><i class="icon-globe"></i><span></span></a>
+                    <li class="lang-switcher-item d-none d-lg-block">
+                        <div class="p-dropdown lang-switcher-dropdown">
+                            <a href="#" aria-label="Language switcher" aria-haspopup="true" aria-expanded="false">
+                                <i class="icon-globe"></i>
+                                <span class="lang-current">{{ strtoupper($activeLocale) }}</span>
+                            </a>
                             <ul class="p-dropdown-content">
                                 <li><a href="{{ $trSwitchUrl }}">Türkçe</a></li>
                                 <li><a href="{{ $enSwitchUrl }}">English</a></li>
                             </ul>
+                        </div>
+                    </li>
+                    <li class="lang-switcher-item d-lg-none">
+                        <div class="lang-switcher-mobile-list" role="group" aria-label="Language switcher">
+                            <a href="{{ $trSwitchUrl }}" class="lang-switcher-mobile-link {{ $activeLocale === 'tr' ? 'is-active' : '' }}">TR</a>
+                            <a href="{{ $enSwitchUrl }}" class="lang-switcher-mobile-link {{ $activeLocale === 'en' ? 'is-active' : '' }}">EN</a>
                         </div>
                     </li>
                 </ul>
@@ -204,32 +317,26 @@
                 <div class="container">
                     <nav>
                         <ul>
-                            <li><a href="{{ url('/') }}">{{ __('nav.home') }}</a></li>
+                            <li><a href="{{ $homeUrl }}">{{ __('nav.home') }}</a></li>
                             <li><a href="{{ $isEn ? route('about.en.index') : route('about.index') }}">{{ __('nav.corporate') }}</a></li>
                             @php
                                 $navCategories = $globalCategories ?? collect();
                                 $parentCategories = $navCategories->where('parent_id', null);
                             @endphp
-                            <li class="dropdown"><a href="{{ url('/urunler') }}">{{ __('nav.products') }}</a>
+                            <li class="dropdown"><a href="{{ route($productsIndexRoute) }}">{{ __('nav.products') }}</a>
                                 <ul class="dropdown-menu">
                                     @forelse($parentCategories as $parent)
                                         @php $children = $navCategories->where('parent_id', $parent->id); @endphp
                                         <li @if($children->isNotEmpty()) class="dropdown-submenu" @endif>
-                                            <a href="{{ url('/urunler/' . $parent->slug_tr) }}">
-                                                {{ $parent->name_tr }}
-                                                @if($parent->products_count ?? false)
-                                                    <span class="badge bg-primary">{{ $parent->products_count }}</span>
-                                                @endif
+                                            <a href="{{ route($productsIndexRoute, ['slug' => $parent->{$categorySlugField} ?: $parent->slug_tr]) }}">
+                                                {{ $parent->{$categoryNameField} ?: $parent->name_tr }}
                                             </a>
                                             @if($children->isNotEmpty())
                                                 <ul class="dropdown-menu">
                                                     @foreach($children as $child)
                                                         <li>
-                                                            <a href="{{ url('/urunler/' . $child->slug_tr) }}">
-                                                                {{ $child->name_tr }}
-                                                                @if($child->products_count ?? false)
-                                                                    <span class="badge bg-primary">{{ $child->products_count }}</span>
-                                                                @endif
+                                                            <a href="{{ route($productsIndexRoute, ['slug' => $child->{$categorySlugField} ?: $child->slug_tr]) }}">
+                                                                {{ $child->{$categoryNameField} ?: $child->name_tr }}
                                                             </a>
                                                         </li>
                                                     @endforeach
@@ -241,31 +348,16 @@
                                     @endforelse
                                     @if(($uncategorizedProductsCount ?? 0) > 0)
                                         <li>
-                                            <a href="{{ url('/urunler/' . ($isEn ? 'other' : 'diger')) }}">
+                                            <a href="{{ route($productsIndexRoute, ['slug' => $isEn ? 'other' : 'diger']) }}">
                                                 {{ __('nav.other') }}
-                                                <span class="badge bg-primary">{{ $uncategorizedProductsCount }}</span>
                                             </a>
                                         </li>
                                     @endif
                                     <li class="dropdown-divider"></li>
-                                    <li><a href="{{ url('/urunler') }}">{{ __('nav.all_products') }}</a></li>
+                                    <li><a href="{{ route($productsIndexRoute) }}">{{ __('nav.all_products') }}</a></li>
                                 </ul>
                             </li>
-                            <li class="dropdown"><a href="{{ route($blogRoutePrefix . 'index') }}">{{ __('nav.blog') }}</a>
-                                <ul class="dropdown-menu">
-                                    @if(isset($globalBlogCategories) && $globalBlogCategories->isNotEmpty())
-                                        @foreach($globalBlogCategories as $category)
-                                        <li>
-                                            <a href="{{ route($blogRoutePrefix . 'category', ['slug' => $category->{$blogCatSlugField} ?? $category->slug_tr]) }}">
-                                                {{ $category->{$blogCatNameField} ?? $category->name_tr }}
-                                            </a>
-                                        </li>
-                                        @endforeach
-                                        <li class="dropdown-divider"></li>
-                                    @endif
-                                    <li><a href="{{ route($blogRoutePrefix . 'index') }}">{{ __('blog.all_posts') }}</a></li>
-                                </ul>
-                            </li>
+                            <li><a href="{{ route($blogRoutePrefix . 'index') }}">{{ __('nav.blog') }}</a></li>
               
                             <li><a href="{{ $contactNavUrl }}">{{ __('nav.contact') }}</a></li>
                         </ul>
