@@ -7,6 +7,11 @@
 
 */
 
+/* Header - menü font boyutu (varsayılan 12px → 14px) */
+#header #mainMenu nav > ul > li > a {
+    font-size: 14px;
+}
+
 /* Blog cards: rounded corners & subtle shadow lift */
 #blog .post-item.border .post-item-wrap {
     border-radius: 14px;
@@ -27,4 +32,137 @@
 }
 #blog.single-post .post-image img {
     border-radius: 14px;
+}
+
+/* Shape divider: %101 genişlik + translateX(-50%) viewport’ta minik yatay scroll üretiyordu */
+.shape-divider svg {
+    width: 100%;
+    left: 0;
+    -webkit-transform: none;
+    -ms-transform: none;
+    transform: none;
+}
+
+/* =============================================
+   MOBILE QA FIXES
+   ============================================= */
+
+/* --- Horizontal overflow: sadece mobilde body-inner'a --- */
+@media (max-width: 991.98px) {
+    .body-inner {
+        overflow-x: hidden;
+    }
+}
+
+/* --- Hamburger menü: dokunma alanını genişlet (16px → 44px) --- */
+@media (max-width: 991.98px) {
+    #mainMenu-trigger {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #mainMenu-trigger a.lines-button {
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        padding: 12px;
+    }
+}
+
+/* --- Dil seçici: mobilde hover yerine click toggle --- */
+@media (max-width: 991.98px) {
+    .header-extras > ul > li > .p-dropdown > a {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .header-extras > ul > li > .p-dropdown > a > i {
+        font-size: 20px;
+    }
+    .p-dropdown .p-dropdown-content > li a,
+    .p-dropdown ul.p-dropdown-content > li a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    .header-extras .p-dropdown .p-dropdown-content,
+    .header-extras .p-dropdown ul.p-dropdown-content {
+        right: 0;
+        margin-top: 4px;
+    }
+    .p-dropdown .p-dropdown-content,
+    .p-dropdown ul.p-dropdown-content {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition: all 0.2s ease;
+    }
+    .p-dropdown:hover .p-dropdown-content,
+    .p-dropdown:hover ul.p-dropdown-content {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+    .p-dropdown.dropdown-open .p-dropdown-content,
+    .p-dropdown.dropdown-open ul.p-dropdown-content {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* --- Cookie banner: mobilde kompakt yerleşim --- */
+@media (max-width: 767px) {
+    .cookie-consent {
+        padding: 10px 12px;
+    }
+    .cookie-consent p {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+    .cookie-consent .cookie-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .cookie-consent .cookie-actions .btn {
+        margin-left: 0;
+        flex: 1 1 auto;
+        text-align: center;
+    }
+}
+
+/* --- İletişim formu: mobilde tam genişlik --- */
+@media (max-width: 768px) {
+    .contact-form-card {
+        padding: 1.5rem;
+    }
+    .contact-form .form-control,
+    .contact-form-card .form-control {
+        width: 100%;
+    }
+    .contact-form .btn-primary,
+    .contact-form-card .btn-primary {
+        width: 100%;
+    }
+}
+
+/* --- Tablet: footer 2 sütun --- */
+@media (min-width: 768px) and (max-width: 991px) {
+    #footer .footer-content .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    #footer .footer-content .row > [class*="col-"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
 }
