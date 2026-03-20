@@ -8,6 +8,9 @@
 @php
     $locale = app()->getLocale();
     $isEn = $locale === 'en';
+    $homeUrl = $isEn ? route('home.en') : route('home');
+    $productsIndexRoute = $isEn ? 'products.en.index' : 'products.index';
+    $productsShowRoute = $isEn ? 'products.en.show' : 'products.show';
 
     $categoryNameField = $isEn ? 'name_en' : 'name_tr';
     $categorySlugField = $isEn ? 'slug_en' : 'slug_tr';
@@ -15,16 +18,64 @@
     $categoryDescField = $isEn ? 'description_en' : 'description_tr';
 
     $productNameField = $isEn ? 'name_en' : 'name_tr';
+    $productSlugField = $isEn ? 'slug_en' : 'slug_tr';
     $productSubtitleField = $isEn ? 'subtitle_en' : 'subtitle_tr';
     $productShortDescField = $isEn ? 'short_description_en' : 'short_description_tr';
     $productDescField = $isEn ? 'description_en' : 'description_tr';
 
-    $productsUrl = route('products.index');
+    $productsUrl = route($productsIndexRoute);
+    $fallbackProductImage = asset('assets/images/other/400x250.webp');
     $contactUrl = $isEn ? route('contact.index.locale', ['locale' => 'en']) : route('contact.index.tr');
     $aboutUrl = $isEn ? route('about.en.index') : route('about.index');
     $phoneHref = !empty($settings->phone) ? 'tel:' . preg_replace('/\D+/', '', $settings->phone) : null;
     $whatsappHref = !empty($settings->whatsapp_phone) ? 'https://wa.me/' . preg_replace('/\D+/', '', $settings->whatsapp_phone) : null;
+
+    $resolveMediaUrl = function (?string $path) {
+        if (empty($path)) {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        $normalizedPath = ltrim($path, '/');
+        if (Str::startsWith($normalizedPath, 'storage/')) {
+            return asset($normalizedPath);
+        }
+
+        return asset('storage/' . $normalizedPath);
+    };
+
+    $localizeHomeSlideUrl = function (?string $url) use ($isEn) {
+        if (!$url || !$isEn) {
+            return $url;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $normalizedPath = '/' . ltrim((string) $path, '/');
+
+        return match ($normalizedPath) {
+            '/', '/en' => route('home.en'),
+            '/iletisim', '/contact', '/en/contact' => route('contact.index.locale', ['locale' => 'en']),
+            '/urunler', '/products', '/en/products' => route('products.en.index'),
+            '/hakkimizda', '/about', '/en/about' => route('about.en.index'),
+            '/kvkk', '/en/kvkk' => route('kvkk.en'),
+            default => $url,
+        };
+    };
 @endphp
+
+@push('head')
+    @if(!empty($sliderData) && is_array($sliderData))
+        @php $firstSlide = $sliderData[0] ?? null; @endphp
+        @if(is_array($firstSlide) && ($firstSlide['type'] ?? '') === 'image' && !empty($firstSlide['image_path']))
+            <link rel="preload" as="image" href="{{ asset('storage/' . $firstSlide['image_path']) }}">
+        @endif
+    @else
+        <link rel="preload" as="image" href="{{ asset('assets/images/blog/blog-banner.webp') }}">
+    @endif
+@endpush
 
 @push('styles')
 <style>
@@ -117,6 +168,39 @@
         display: flex;
         flex-direction: column;
     }
+    .home-featured-card .portfolio-image {
+        position: relative;
+        min-height: 220px;
+        background: #eef2f7;
+    }
+    .home-featured-card .portfolio-image:after {
+        display: none;
+    }
+    .home-featured-card .portfolio-image > a,
+    .home-featured-card .portfolio-image picture,
+    .home-featured-card .portfolio-image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    .home-featured-card .portfolio-image img {
+        min-height: 220px;
+        object-fit: cover;
+    }
+    .home-featured-card .portfolio-description {
+        position: static !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        width: 100% !important;
+        padding: 1rem 1.25rem;
+        background: #fff;
+        text-align: left;
+    }
+    .home-featured-card .portfolio-description span {
+        opacity: 1 !important;
+        color: #6b7280;
+    }
     .home-catalog-card .portfolio-image {
         position: absolute;
         inset: 0;
@@ -167,6 +251,11 @@
     .home-featured-carousel .flickity-viewport {
         overflow: visible;
     }
+    @media (max-width: 991px) {
+        .home-featured-carousel .flickity-viewport {
+            overflow: hidden;
+        }
+    }
     .home-featured-carousel .flickity-button {
         background: #fff;
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
@@ -176,6 +265,230 @@
     }
     .home-featured-carousel .flickity-page-dots {
         bottom: -8px;
+    }
+    .home-product-tabs {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-bottom: 1.5rem;
+    }
+    .home-product-tab {
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #1f2937;
+        border-radius: 999px;
+        padding: 0.5rem 1rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        line-height: 1.2;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .home-product-tab:hover {
+        border-color: #1b2838;
+        color: #1b2838;
+    }
+    .home-product-tab.is-active {
+        background: #1b2838;
+        border-color: #1b2838;
+        color: #fff;
+    }
+    .home-product-card-wrap.is-hidden {
+        display: none;
+    }
+    .home-products-carousel {
+        padding-bottom: 2.8rem;
+    }
+    .home-products-carousel .polo-carousel-item {
+        padding-bottom: 10px;
+    }
+    .home-products-carousel .flickity-page-dots {
+        display: none !important;
+        bottom: -4px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: max-content;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0;
+        margin: 0;
+    }
+    .home-product-desktop-carousel .flickity-button {
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    }
+    .home-product-desktop-carousel .flickity-button:hover {
+        background: #1b2838;
+    }
+    .product-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+        transition: box-shadow 0.25s ease, transform 0.25s ease;
+        border: 1px solid rgba(39,68,93,0.06);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .product-card:hover {
+        box-shadow: 0 12px 32px rgba(15,23,42,0.12);
+        transform: translateY(-2px);
+    }
+    .product-card-media {
+        display: block;
+        position: relative;
+        background: #f8f9fb;
+        aspect-ratio: 4/3;
+        overflow: hidden;
+    }
+    .product-card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease, opacity 0.35s ease;
+    }
+    .product-card-image-main {
+        position: absolute;
+        inset: 0;
+    }
+    .product-card-image-hover {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        z-index: 1;
+    }
+    .product-card-media:hover .product-card-image-hover {
+        opacity: 1;
+    }
+    .product-card-media:hover .product-card-image-main:not(.product-card-image-hover) {
+        transform: scale(1.03);
+    }
+    .home-product-placeholder {
+        width: 100%;
+        height: 100%;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        background: linear-gradient(135deg, #132235 0%, #22364d 100%);
+        color: rgba(255,255,255,0.9);
+        text-align: center;
+    }
+    .home-product-placeholder i {
+        font-size: 2.35rem;
+        opacity: 0.9;
+        animation: saw-blade-spin 11s linear infinite;
+    }
+    .home-product-placeholder span {
+        font-size: 0.78rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.72);
+    }
+    .product-card-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(39,68,93,0.85);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .product-card-overlay i {
+        margin-left: 6px;
+        font-size: 12px;
+    }
+    .product-card-media:hover .product-card-overlay {
+        opacity: 1;
+    }
+    .product-card-body {
+        padding: 16px 18px 18px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 132px;
+    }
+    .product-card-brand {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #27445d;
+        margin-bottom: 8px;
+        min-height: 16px;
+    }
+    .product-card-brand.is-empty {
+        visibility: hidden;
+    }
+    .product-card-title {
+        font-size: 16px;
+        line-height: 1.4;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .product-card-title a {
+        color: #1e293b;
+        text-decoration: none;
+    }
+    .product-card-link {
+        font-size: 13px;
+        font-weight: 600;
+        color: #27445d;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: auto;
+    }
+    .home-product-desktop-carousel .flickity-button {
+        top: 42%;
+        bottom: auto;
+        width: 34px;
+        height: 34px;
+        transform: translateY(-50%);
+        z-index: 4;
+    }
+    .home-product-desktop-carousel .flickity-prev-next-button.previous {
+        left: -12px;
+    }
+    .home-product-desktop-carousel .flickity-prev-next-button.next {
+        right: -12px;
+    }
+    .home-product-desktop-carousel .flickity-page-dots {
+        bottom: -2px;
+    }
+    .home-product-desktop-carousel {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+    .home-products-empty {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin: 0.25rem 0 0;
+    }
+    .home-products-cta {
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
     .home-catalog-card .portfolio-description h3,
     .home-featured-card .portfolio-description h3 {
@@ -258,6 +571,11 @@
     }
     .home-category-carousel .flickity-viewport {
         overflow: visible;
+    }
+    @media (max-width: 991px) {
+        .home-category-carousel .flickity-viewport {
+            overflow: hidden;
+        }
     }
     .home-category-carousel .flickity-button {
         background: #fff;
@@ -452,6 +770,7 @@
         overflow: hidden;
         background: linear-gradient(135deg, var(--home-anthracite) 0%, var(--home-navy) 100%);
         padding: 4rem 0;
+        isolation: isolate;
     }
     .home-section-divider {
         height: 1.5rem;
@@ -461,7 +780,7 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        z-index: 0;
+        z-index: 1;
     }
     .home-cta-saw-blade {
         position: absolute;
@@ -471,12 +790,14 @@
         top: var(--sb-y);
         transform-origin: center center;
         background: url('{{ asset("assets/images/saw-blade-bg.svg") }}') center/contain no-repeat;
-        opacity: 0.38;
+        opacity: 0.22;
         animation: saw-blade-spin-centered var(--sb-dur, 25s) linear infinite;
     }
-    .home-cta-section .container {
+    .home-cta-content {
         position: relative;
-        z-index: 1;
+        z-index: 2;
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
     .home-cta-section .btn-primary {
         background: var(--home-accent);
@@ -501,6 +822,22 @@
         }
     }
     @media (max-width: 991px) {
+        [data-animate],
+        [data-caption-animate],
+        .animated {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+            animation: none !important;
+            transition: none !important;
+        }
+        .home-cta-saw-blades {
+            opacity: 1;
+        }
+        .home-cta-saw-blade {
+            animation: none;
+            opacity: 0.16;
+        }
         .home-catalog-card,
         .home-catalog-card .portfolio-item-wrap {
             min-height: 340px;
@@ -547,13 +884,13 @@
             <div class="container">
                 <div class="slide-captions text-light">
                     @if(!empty($slide['title_tr']))
-                        <h1 data-caption-animate="zoom-out">{{ $isEn ? ($slide['title_en'] ?? $slide['title_tr']) : $slide['title_tr'] }}</h1>
+                        <h1>{{ $isEn ? ($slide['title_en'] ?? $slide['title_tr']) : $slide['title_tr'] }}</h1>
                     @endif
                     @if(!empty($slide['subtitle_tr']))
                         <p class="lead">{{ $isEn ? ($slide['subtitle_en'] ?? $slide['subtitle_tr']) : $slide['subtitle_tr'] }}</p>
                     @endif
                     @if(!empty($slide['button_text_tr']) && !empty($slide['button_link']))
-                        <div><a href="{{ $slide['button_link'] }}" class="btn btn-primary">{{ $isEn ? ($slide['button_text_en'] ?? $slide['button_text_tr']) : $slide['button_text_tr'] }}</a></div>
+                        <div><a href="{{ $localizeHomeSlideUrl($slide['button_link']) }}" class="btn btn-primary">{{ $isEn ? ($slide['button_text_en'] ?? $slide['button_text_tr']) : $slide['button_text_tr'] }}</a></div>
                     @endif
                 </div>
             </div>
@@ -562,13 +899,13 @@
     </div>
     @else
     {{-- Varsayılan: Tek sabit hero - yüksek kaliteli makine görseli hissi --}}
-    <div id="slider" class="home-hero" style="min-height: 72vh; background: url('{{ asset('assets/images/blog/blog-banner.png') }}') center/cover no-repeat; position: relative;">
+    <div id="slider" class="home-hero" style="min-height: 72vh; background: url('{{ asset('assets/images/blog/blog-banner.webp') }}') center/cover no-repeat; position: relative;">
         <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13,27,42,0.88) 0%, rgba(13,27,42,0.5) 100%, transparent 30%);"></div>
         <div class="container" style="position: relative; z-index: 2; padding-top: 140px; padding-bottom: 100px;">
             <div class="slide-captions text-light">
                 <h1 style="font-weight: 700; letter-spacing: 0.02em; font-size: 3rem; line-height: 1.2;">{{ __('home.hero_slogan') }}</h1>
                 <p class="lead" style="font-size: 1.25rem; max-width: 540px; margin-bottom: 2rem;">{{ __('home.hero_subtitle') }}</p>
-                <a href="{{ url('/urunler') }}" class="btn btn-primary">{{ __('home.hero_cta') }}</a>
+                <a href="{{ $productsUrl }}" class="btn btn-primary">{{ __('home.hero_cta') }}</a>
             </div>
         </div>
     </div>
@@ -595,13 +932,18 @@
                     $categoryText = $category->{$categorySubtitleField}
                         ?: Str::limit(strip_tags($category->{$categoryDescField} ?: $category->description_tr ?: ''), 120);
                 @endphp
-                <div class="home-category-slide" data-animate="fadeInUp" data-animate-delay="{{ $index * 100 }}">
+                <div class="home-category-slide">
                     <div class="portfolio-item img-zoom home-catalog-card">
                         <div class="portfolio-item-wrap">
                             <div class="portfolio-image">
-                                <a href="{{ route('products.index', $categorySlug) }}">
+                                <a href="{{ route($productsIndexRoute, ['slug' => $categorySlug]) }}">
                                     @if($category->image)
-                                        <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $categoryName }}" loading="lazy">
+                                        <x-webp-image
+                                            :src="asset('storage/' . $category->image)"
+                                            :alt="$categoryName"
+                                            :loading="$index === 0 ? 'eager' : 'lazy'"
+                                            @if($index === 0) fetchpriority="high" @endif
+                                        />
                                     @else
                                         <div class="d-flex align-items-center justify-content-center bg-dark text-light home-catalog-placeholder" style="min-height:100%; width:100%;">
                                             <i class="icon-grid" style="font-size:3.5rem; opacity:0.6;"></i>
@@ -610,12 +952,12 @@
                                 </a>
                             </div>
                             <div class="portfolio-description">
-                                <h3><a href="{{ route('products.index', $categorySlug) }}">{{ $categoryName }}</a></h3>
+                                <h3><a href="{{ route($productsIndexRoute, ['slug' => $categorySlug]) }}">{{ $categoryName }}</a></h3>
                                 <p class="catalog-desc">
                                     {{ $categoryText ?: __('home.categories_subtitle') }}
                                 </p>
                                 <div class="catalog-actions">
-                                    <a href="{{ route('products.index', $categorySlug) }}" class="btn btn-light btn-outline btn-rounded btn-sm" aria-label="{{ __('home.detail_button') }}" title="{{ __('home.detail_button') }}">
+                                    <a href="{{ route($productsIndexRoute, ['slug' => $categorySlug]) }}" class="btn btn-light btn-outline btn-rounded" aria-label="{{ __('home.detail_button') }}" title="{{ __('home.detail_button') }}">
                                         {{ __('home.detail_button') }}
                                     </a>
                                 </div>
@@ -649,11 +991,12 @@
                         'button' => __('home.service_products_button'),
                     ],
                     [
-                        'url' => $phoneHref ?: $contactUrl,
+                        'url' => $contactUrl,
                         'icon' => 'fa fa-wrench',
                         'title' => __('home.service_technical'),
                         'desc' => __('home.service_technical_desc'),
                         'button' => __('home.service_call'),
+                        'phone_cta' => $phoneHref,
                     ],
                     [
                         'url' => $contactUrl,
@@ -667,7 +1010,20 @@
 
             <div class="row">
                 @foreach($serviceCards as $serviceIndex => $serviceCard)
-                <div class="col-lg-4 m-b-30" data-animate="fadeInUp" data-animate-delay="{{ $serviceIndex * 100 }}">
+                <div class="col-lg-4 m-b-30">
+                    @if(!empty($serviceCard['phone_cta']))
+                    {{-- Teknik Servis kartı: Kart bilgilendirici, sadece "Ara" butonu telefon linki --}}
+                    <div class="icon-box effect medium border text-center home-service-box p-4 text-dark">
+                        <div class="icon"><i class="{{ $serviceCard['icon'] }}"></i></div>
+                        <h3>{{ $serviceCard['title'] }}</h3>
+                        @if(!empty($serviceCard['desc']))
+                            <p class="text-muted">{{ $serviceCard['desc'] }}</p>
+                        @else
+                            <div class="home-service-spacer"></div>
+                        @endif
+                        <a href="{{ $serviceCard['phone_cta'] }}" class="btn btn-outline-dark btn-rounded home-service-cta text-decoration-none">{{ $serviceCard['button'] }} <i class="icon-chevron-right"></i></a>
+                    </div>
+                    @else
                     <a href="{{ $serviceCard['url'] }}" class="text-decoration-none text-dark">
                         <div class="icon-box effect medium border text-center home-service-box p-4">
                             <div class="icon"><i class="{{ $serviceCard['icon'] }}"></i></div>
@@ -677,118 +1033,176 @@
                             @else
                                 <div class="home-service-spacer"></div>
                             @endif
-                            <span class="btn btn-outline-dark btn-rounded btn-sm home-service-cta">{{ $serviceCard['button'] }} <i class="icon-chevron-right"></i></span>
+                            <span class="btn btn-outline-dark btn-rounded home-service-cta">{{ $serviceCard['button'] }} <i class="icon-chevron-right"></i></span>
                         </div>
                     </a>
+                    @endif
                 </div>
                 @endforeach
             </div>
         </div>
     </section>
 
-    {{-- Why Choose Us --}}
-    <section class="home-section-dark text-light p-t-80 p-b-80" id="about">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-5 mb-lg-0">
-                    <div class="heading-text heading-section home-heading-agency">
-                        <h2 class="text-light">{{ __('about.why_title') }}</h2>
-                        @if(!empty(__('home.why_subtitle')))
-                            <span class="lead">{{ __('home.why_subtitle') }}</span>
-                        @endif
-                    </div>
-                    <p class="lead m-t-20">{{ __('about.intro_1') }}</p>
-                    <a href="{{ $aboutUrl }}" class="btn btn-light m-t-20">{{ __('home.about_more') }}</a>
-                </div>
-                <div class="col-lg-8 home-why-box">
-                    <div class="row">
-                        <div class="col-lg-6 mb-4">
-                            <div class="home-why-card">
-                                <div class="home-why-icon"><i class="fa fa-cog"></i></div>
-                                <h3>{{ __('about.why_1_title') }}</h3>
-                                <p>{{ __('about.why_1_text') }}</p>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 mb-4">
-                            <div class="home-why-card">
-                                <div class="home-why-icon"><i class="fa fa-puzzle-piece"></i></div>
-                                <h3>{{ __('about.why_2_title') }}</h3>
-                                <p>{{ __('about.why_2_text') }}</p>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 mb-4 mb-lg-0">
-                            <div class="home-why-card">
-                                <div class="home-why-icon"><i class="fa fa-headset"></i></div>
-                                <h3>{{ __('about.why_3_title') }}</h3>
-                                <p>{{ __('about.why_3_text') }}</p>
-                            </div>
-                        </div>
-                        <div class="col-lg-6 mb-4 mb-lg-0">
-                            <div class="home-why-card">
-                                <div class="home-why-icon"><i class="fa fa-leaf"></i></div>
-                                <h3>{{ __('about.why_4_title') }}</h3>
-                                <p>{{ __('about.why_4_text') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- Featured Machines --}}
-    @if($featuredProducts->isNotEmpty())
-    <section id="featured-machines" class="background-grey p-t-50 p-b-50">
+    {{-- Product Explorer --}}
+    @if($homeProducts->isNotEmpty())
+    <section id="home-products-section" class="background-grey p-t-50 p-b-50">
         <div class="container">
             <div class="heading-text heading-section home-heading-agency text-center m-b-30">
-                <h2>{{ __('home.featured_title') }}</h2>
-                <span class="lead">{{ __('home.featured_subtitle') }}</span>
+                <h2>{{ __('home.product_groups_title') }}</h2>
             </div>
 
-            <div class="carousel home-featured-carousel dots-creative dots-dark arrows-visibile"
+            <div class="home-product-tabs" role="tablist" aria-label="{{ __('home.product_groups_title') }}">
+                <button type="button" class="home-product-tab is-active" data-home-product-tab="all">
+                    {{ __('home.all_products_tab') }}
+                </button>
+                @foreach($homeProductCategories as $category)
+                <button type="button" class="home-product-tab" data-home-product-tab="{{ $category->id }}">
+                    {{ $category->{$categoryNameField} ?: $category->name_tr }}
+                </button>
+                @endforeach
+            </div>
+
+            <div class="carousel home-product-desktop-carousel home-products-carousel d-none d-lg-block"
                  data-items="4"
                  data-items-lg="4"
                  data-items-md="3"
                  data-items-sm="2"
                  data-items-xs="1"
-                 data-margin="10"
+                 data-margin="12"
                  data-loop="false"
-                 data-group-cells="true">
-                @foreach($featuredProducts as $index => $product)
+                 data-group-cells="true"
+                 data-dots="false"
+                 data-arrows="true">
+                @foreach($homeProducts as $index => $product)
                 @php
                     $productName = $product->{$productNameField} ?: $product->name_tr;
-                    $productCategory = $product->category ? ($product->category->{$categoryNameField} ?: $product->category->name_tr) : null;
-                    $firstImg = $product->media?->firstWhere('media_type', 'image');
-                    $productImage = $product->thumbnail
-                        ? asset('storage/' . $product->thumbnail)
-                        : ($firstImg && $firstImg->path ? asset('storage/' . $firstImg->path) : null);
+                    $imageItems = $product->media ? $product->media->where('media_type', 'image') : collect();
+                    $productImages = $imageItems->isNotEmpty()
+                        ? $imageItems->map(fn($m) => $resolveMediaUrl($m->path))->filter()->values()
+                        : collect();
+                    if ($productImages->isEmpty() && $product->thumbnail) {
+                        $thumbnailUrl = $resolveMediaUrl($product->thumbnail);
+                        if ($thumbnailUrl) {
+                            $productImages = collect([$thumbnailUrl]);
+                        }
+                    }
+                    $hasSecondImage = $productImages->count() > 1;
+                    $productImage = $productImages->first();
+                    $hasProductImage = filled($productImage);
                 @endphp
-                <div class="portfolio-item img-zoom">
-                    <div class="portfolio-item-wrap">
-                        <div class="portfolio-image">
-                            <a href="{{ route('products.show', $product->slug_tr) }}">
-                                @if($productImage)
-                                    <img src="{{ $productImage }}" alt="{{ $productName }}" loading="lazy">
-                                @else
-                                    <div class="d-flex align-items-center justify-content-center bg-dark text-light" style="min-height:180px;">
-                                        <i class="icon-camera" style="font-size:2.5rem; opacity:0.5;"></i>
-                                    </div>
-                                @endif
+                <div class="m-b-30 home-product-card-wrap" data-home-product-card data-category-id="{{ $product->category_id }}">
+                    <article class="product-card">
+                        <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}" class="product-card-media">
+                            @if($hasProductImage)
+                            <img
+                                src="{{ $productImage }}"
+                                alt="{{ $productName }}"
+                                loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                class="product-card-image product-card-image-main"
+                                onerror="this.onerror=null;this.src='{{ $fallbackProductImage }}';"
+                                @if($index === 0) fetchpriority="high" @endif
+                            >
+                            @if($hasSecondImage)
+                            <img
+                                src="{{ $productImages->get(1) }}"
+                                alt="{{ $productName }}"
+                                loading="lazy"
+                                class="product-card-image product-card-image-hover"
+                                onerror="this.onerror=null;this.src='{{ $fallbackProductImage }}';"
+                            >
+                            @endif
+                            @else
+                            <div class="home-product-placeholder">
+                                <i class="icon-cpu" aria-hidden="true"></i>
+                                <span>{{ __('home.image_placeholder') }}</span>
+                            </div>
+                            @endif
+                            <span class="product-card-overlay">{{ __('home.detail_button') }} <i class="icon-chevron-right"></i></span>
+                        </a>
+                        <div class="product-card-body">
+                            <span class="product-card-brand {{ $product->brand ? '' : 'is-empty' }}">{{ $product->brand?->name ?? '&nbsp;' }}</span>
+                            <h3 class="product-card-title">
+                                <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}">{{ $productName }}</a>
+                            </h3>
+                            <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}" class="product-card-link">
+                                {{ __('home.detail_button') }} <i class="icon-chevron-right"></i>
                             </a>
                         </div>
-                        <div class="portfolio-description">
-                            <a href="{{ route('products.show', $product->slug_tr) }}">
-                                <h3>{{ $productName }}</h3>
-                                <span>{{ $product->brand ? $product->brand->name . ($productCategory ? ' · ' . $productCategory : '') : ($productCategory ?: __('home.detail_button')) }}</span>
-                            </a>
-                        </div>
-                    </div>
+                    </article>
                 </div>
                 @endforeach
             </div>
+            <div class="carousel home-product-mobile-carousel home-products-carousel d-lg-none"
+                 data-items="2"
+                 data-items-sm="2"
+                 data-items-xs="1"
+                 data-margin="12"
+                 data-loop="false"
+                 data-group-cells="true"
+                 data-dots="false"
+                 data-arrows="false">
+                @foreach($homeProducts as $index => $product)
+                @php
+                    $productName = $product->{$productNameField} ?: $product->name_tr;
+                    $imageItems = $product->media ? $product->media->where('media_type', 'image') : collect();
+                    $productImages = $imageItems->isNotEmpty()
+                        ? $imageItems->map(fn($m) => $resolveMediaUrl($m->path))->filter()->values()
+                        : collect();
+                    if ($productImages->isEmpty() && $product->thumbnail) {
+                        $thumbnailUrl = $resolveMediaUrl($product->thumbnail);
+                        if ($thumbnailUrl) {
+                            $productImages = collect([$thumbnailUrl]);
+                        }
+                    }
+                    $hasSecondImage = $productImages->count() > 1;
+                    $productImage = $productImages->first();
+                    $hasProductImage = filled($productImage);
+                @endphp
+                <div class="home-product-card-wrap" data-home-product-card data-category-id="{{ $product->category_id }}">
+                    <article class="product-card">
+                        <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}" class="product-card-media">
+                            @if($hasProductImage)
+                            <img
+                                src="{{ $productImage }}"
+                                alt="{{ $productName }}"
+                                loading="{{ $index === 0 ? 'eager' : 'lazy' }}"
+                                class="product-card-image product-card-image-main"
+                                onerror="this.onerror=null;this.src='{{ $fallbackProductImage }}';"
+                            >
+                            @if($hasSecondImage)
+                            <img
+                                src="{{ $productImages->get(1) }}"
+                                alt="{{ $productName }}"
+                                loading="lazy"
+                                class="product-card-image product-card-image-hover"
+                                onerror="this.onerror=null;this.src='{{ $fallbackProductImage }}';"
+                            >
+                            @endif
+                            @else
+                            <div class="home-product-placeholder">
+                                <i class="icon-cpu" aria-hidden="true"></i>
+                                <span>{{ __('home.image_placeholder') }}</span>
+                            </div>
+                            @endif
+                            <span class="product-card-overlay">{{ __('home.detail_button') }} <i class="icon-chevron-right"></i></span>
+                        </a>
+                        <div class="product-card-body">
+                            <span class="product-card-brand {{ $product->brand ? '' : 'is-empty' }}">{{ $product->brand?->name ?? '&nbsp;' }}</span>
+                            <h3 class="product-card-title">
+                                <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}">{{ $productName }}</a>
+                            </h3>
+                            <a href="{{ route($productsShowRoute, ['slug' => $product->{$productSlugField} ?: $product->slug_tr]) }}" class="product-card-link">
+                                {{ __('home.detail_button') }} <i class="icon-chevron-right"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+                @endforeach
+            </div>
+            <p class="home-products-empty d-none" data-home-products-empty>{{ __('home.no_products') }}</p>
 
-            <div class="text-center m-t-20">
-                <a href="{{ $productsUrl }}" class="btn btn-primary">{{ __('home.cta_products') }}</a>
+            <div class="home-products-cta m-t-20">
+                <a href="{{ $productsUrl }}" class="btn btn-outline btn-dark btn-rounded">{{ __('home.cta_products') }}</a>
             </div>
         </div>
     </section>
@@ -820,7 +1234,7 @@
             <div class="home-cta-saw-blade" style="--sb-x: 28%; --sb-y: 32%; --sb-size: 50px; --sb-dur: 26s;"></div>
             <div class="home-cta-saw-blade" style="--sb-x: 62%; --sb-y: 45%; --sb-size: 66px; --sb-dur: 29s;"></div>
         </div>
-        <div class="container">
+        <div class="container home-cta-content">
             <div class="row align-items-center">
                 <div class="col-lg-8 text-center text-lg-start">
                     <h3 class="mb-2">{{ __('home.cta_title') }}</h3>
@@ -835,3 +1249,73 @@
     </section>
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const section = document.getElementById('home-products-section');
+    if (!section) return;
+
+    const tabs = section.querySelectorAll('[data-home-product-tab]');
+    const desktopCards = section.querySelectorAll('.home-product-desktop-carousel [data-home-product-card]');
+    const mobileCards = section.querySelectorAll('.home-product-mobile-carousel [data-home-product-card]');
+    const carousels = section.querySelectorAll('.home-products-carousel');
+    const emptyState = section.querySelector('[data-home-products-empty]');
+
+    const applyFilterToCards = (cards, categoryId) => {
+        let matchingCount = 0;
+        let visibleCount = 0;
+
+        cards.forEach((card) => {
+            const cardCategory = card.dataset.categoryId || '';
+            const isMatchingCategory = categoryId === 'all' || cardCategory === categoryId;
+            if (isMatchingCategory) {
+                matchingCount++;
+            }
+            const shouldShow = isMatchingCategory;
+            card.classList.toggle('is-hidden', !shouldShow);
+            const carouselCell = card.closest('.polo-carousel-item');
+            if (carouselCell) {
+                carouselCell.style.display = shouldShow ? '' : 'none';
+            }
+            if (shouldShow) {
+                visibleCount++;
+            }
+        });
+
+        return matchingCount;
+    };
+
+    const applyFilter = (categoryId) => {
+        const desktopMatchingCount = applyFilterToCards(desktopCards, categoryId);
+        applyFilterToCards(mobileCards, categoryId);
+
+        tabs.forEach((tab) => {
+            tab.classList.toggle('is-active', tab.dataset.homeProductTab === categoryId);
+        });
+
+        if (emptyState) {
+            emptyState.classList.toggle('d-none', desktopMatchingCount > 0);
+        }
+
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.flickity) {
+            carousels.forEach((carousel) => {
+                const $carousel = window.jQuery(carousel);
+                if ($carousel.data('flickity')) {
+                    $carousel.flickity('resize');
+                    $carousel.flickity('select', 0, false, true);
+                }
+            });
+        }
+    };
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', function () {
+            applyFilter(this.dataset.homeProductTab || 'all');
+        });
+    });
+
+    applyFilter('all');
+});
+</script>
+@endpush
