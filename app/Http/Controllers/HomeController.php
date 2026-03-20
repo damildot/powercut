@@ -14,13 +14,24 @@ class HomeController extends Controller
      */
     public function index()
     {
-        // Get Featured Products
-        $featuredProducts = Product::with(['category', 'brand', 'media'])
-            ->where('is_featured', true)
+        // Homepage product explorer (all active products)
+        $homeProducts = Product::with(['category', 'brand', 'media'])
             ->where('is_active', true)
-            ->orderByDesc('views_count')
+            ->where('is_featured', true)
             ->orderBy('sort_order')
-            ->limit(6)
+            ->orderByDesc('id')
+            ->get();
+
+        $homeProductCategoryIds = $homeProducts->pluck('category_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $homeProductCategories = Category::query()
+            ->where('is_active', true)
+            ->whereIn('id', $homeProductCategoryIds)
+            ->orderByDesc('show_on_home')
+            ->orderBy('sort_order')
             ->get();
 
         $categories = Category::where('is_active', true)
@@ -58,7 +69,8 @@ class HomeController extends Controller
         $seoKeywords = 'metal kesim, şerit testere, endüstriyel makina, cnc';
 
         return view('frontend.home', compact(
-            'featuredProducts',
+            'homeProducts',
+            'homeProductCategories',
             'categories',
             'homeCategories',
             'referenceBrands',
