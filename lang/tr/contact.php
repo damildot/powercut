@@ -15,6 +15,7 @@ return [
     'address' => 'Adres',
     'hours' => 'Çalışma Saatleri',
     'whatsapp' => 'WhatsApp',
+    'whatsapp_default_message' => 'Merhaba',
 
     'form_name' => 'Ad Soyad',
     'form_email' => 'Email',
