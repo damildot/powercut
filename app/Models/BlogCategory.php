@@ -15,6 +15,8 @@ class BlogCategory extends Model
     {
         parent::boot();
 
+        static::saved(fn () => \Illuminate\Support\Facades\Cache::forget('view_global_blog_categories'));
+
         static::creating(function ($category) {
             if (empty($category->slug_tr) && !empty($category->name_tr)) {
                 $category->slug_tr = Str::slug($category->name_tr);
