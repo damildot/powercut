@@ -3,6 +3,9 @@
 
 @php
     $isEn = app()->getLocale() === 'en';
+    $homeRoute = $isEn ? 'home.en' : 'home';
+    $productsIndexRoute = $isEn ? 'products.en.index' : 'products.index';
+    $productsShowRoute = $isEn ? 'products.en.show' : 'products.show';
     $nameField = $isEn ? 'name_en' : 'name_tr';
     $slugField = $isEn ? 'slug_en' : 'slug_tr';
     $shortDescField = $isEn ? 'short_description_en' : 'short_description_tr';
@@ -32,7 +35,7 @@
 @section('title', $pageTitle . ' | ' . ($settings->site_title ?? 'POWERCUT'))
 @section('meta_description', $pageDesc)
 @section('meta_keywords', $pageKeywords)
-@section('canonical', ($selectedCategory ?? null) ? route('products.index', $selectedCategory->{$slugField} ?? $selectedCategory->slug_tr) : (($showUncategorized ?? false) ? route('products.index', $digerSlug) : route('products.index')))
+@section('canonical', ($selectedCategory ?? null) ? route($productsIndexRoute, $selectedCategory->{$slugField} ?? $selectedCategory->slug_tr) : (($showUncategorized ?? false) ? route($productsIndexRoute, $digerSlug) : route($productsIndexRoute)))
 
 @push('head')
     <meta property="og:title" content="{{ $pageTitle }} | {{ $settings->site_title ?? 'POWERCUT' }}">
@@ -53,7 +56,7 @@
             {
                 "@@type": "ListItem",
                 "position": {{ ($products->currentPage() - 1) * $products->perPage() + $index + 1 }},
-                "url": "{{ route('products.show', $p->slug_tr) }}",
+                "url": "{{ route($productsShowRoute, $p->{$slugField} ?? $p->slug_tr) }}",
                 "name": "{{ addslashes($p->{$nameField} ?? $p->name_tr) }}"
             }@if(!$loop->last),@endif
             @endforeach
@@ -71,9 +74,9 @@
         </div>
         <div class="breadcrumb">
             <ul>
-                <li><a href="{{ route('home') }}" class="text-light">{{ __('nav.home') }}</a></li>
+                <li><a href="{{ route($homeRoute) }}" class="text-light">{{ __('nav.home') }}</a></li>
                 @if($selectedCategoryName || ($showUncategorized ?? false))
-                <li><a href="{{ route('products.index') }}" class="text-light">{{ __('nav.products') }}</a></li>
+                <li><a href="{{ route($productsIndexRoute) }}" class="text-light">{{ __('nav.products') }}</a></li>
                 <li class="active"><a href="#" class="text-light">{{ $selectedCategoryName ?? __('nav.other') }}</a></li>
                 @else
                 <li class="active"><a href="#" class="text-light">{{ __('nav.products') }}</a></li>
@@ -95,7 +98,7 @@
 
                     <div class="product-category-accordion">
                         <div class="accordion-item {{ !($selectedCategory ?? null) && !($showUncategorized ?? false) ? 'active' : '' }}">
-                            <a href="{{ route('products.index') }}" class="accordion-link d-flex align-items-center justify-content-between">
+                            <a href="{{ route($productsIndexRoute) }}" class="accordion-link d-flex align-items-center justify-content-between">
                                 <span>{{ __('products.all') }}</span>
                             </a>
                         </div>
@@ -115,18 +118,18 @@
                                             <i class="icon-chevron-down accordion-icon"></i>
                                         </summary>
                                         <div class="accordion-body">
-                                            <a href="{{ route('products.index', $parent->{$slugField} ?? $parent->slug_tr) }}" class="accordion-child-link {{ $selectedCategory && $selectedCategory->id === $parent->id ? 'is-current' : '' }}">
+                                            <a href="{{ route($productsIndexRoute, $parent->{$slugField} ?? $parent->slug_tr) }}" class="accordion-child-link {{ $selectedCategory && $selectedCategory->id === $parent->id ? 'is-current' : '' }}">
                                                 {{ $parent->{$nameField} ?? $parent->name_tr }}
                                             </a>
                                             @foreach($children as $child)
-                                                <a href="{{ route('products.index', $child->{$slugField} ?? $child->slug_tr) }}" class="accordion-child-link {{ $selectedCategory && $selectedCategory->id === $child->id ? 'is-current' : '' }}">
+                                                <a href="{{ route($productsIndexRoute, $child->{$slugField} ?? $child->slug_tr) }}" class="accordion-child-link {{ $selectedCategory && $selectedCategory->id === $child->id ? 'is-current' : '' }}">
                                                     {{ $child->{$nameField} ?? $child->name_tr }}
                                                 </a>
                                             @endforeach
                                         </div>
                                     </details>
                                 @else
-                                    <a href="{{ route('products.index', $parent->{$slugField} ?? $parent->slug_tr) }}" class="accordion-link d-flex align-items-center justify-content-between">
+                                    <a href="{{ route($productsIndexRoute, $parent->{$slugField} ?? $parent->slug_tr) }}" class="accordion-link d-flex align-items-center justify-content-between">
                                         <span>{{ $parent->{$nameField} ?? $parent->name_tr }}</span>
                                     </a>
                                 @endif
@@ -135,7 +138,7 @@
 
                         @if(($uncategorizedProductsCount ?? 0) > 0)
                             <div class="accordion-item {{ ($showUncategorized ?? false) ? 'active' : '' }}">
-                                <a href="{{ route('products.index', $digerSlug) }}" class="accordion-link d-flex align-items-center justify-content-between">
+                                <a href="{{ route($productsIndexRoute, $digerSlug) }}" class="accordion-link d-flex align-items-center justify-content-between">
                                     <span>{{ __('nav.other') }}</span>
                                     <span class="category-count">{{ $uncategorizedProductsCount }}</span>
                                 </a>
@@ -162,8 +165,8 @@
                                 if ($productImages->isEmpty() && $product->thumbnail) {
                                     $productImages = collect([asset('storage/' . $product->thumbnail)]);
                                 }
-                                $hasSecondImage = $productImages->count() > 1;
                                 $productImage = $productImages->first();
+                                $productImageCount = $productImages->count();
                                 $productShortDesc = $product->{$shortDescField} ?? $product->short_description_tr;
                                 if (!$productShortDesc) {
                                     $descRaw = ($isEn ? $product->description_en : $product->description_tr) ?? '';
@@ -173,11 +176,20 @@
 
                             <div class="col-md-6 col-xl-4 m-b-24">
                                 <article class="product-card">
-                                    <a href="{{ route('products.show', $product->slug_tr) }}" class="product-card-media">
+                                    <a href="{{ route($productsShowRoute, $product->{$slugField} ?? $product->slug_tr) }}" class="product-card-media">
                                         @if($productImage)
-                                            <img src="{{ $productImage }}" alt="{{ $productName }}" loading="lazy" class="product-card-image product-card-image-main">
-                                            @if($hasSecondImage)
-                                            <img src="{{ $productImages->get(1) }}" alt="{{ $productName }}" loading="lazy" class="product-card-image product-card-image-hover">
+                                            @if($productImageCount > 1)
+                                                @foreach($productImages as $imageIndex => $imageUrl)
+                                                    <x-webp-image
+                                                        :src="$imageUrl"
+                                                        :alt="$productName"
+                                                        loading="lazy"
+                                                        class="product-card-image product-card-image-slide {{ $imageIndex === 0 ? 'is-initial' : '' }}"
+                                                        style="--slide-index: {{ $imageIndex }}; --slide-count: {{ $productImageCount }};"
+                                                    />
+                                                @endforeach
+                                            @else
+                                                <x-webp-image :src="$productImage" :alt="$productName" loading="lazy" class="product-card-image product-card-image-main" />
                                             @endif
                                         @else
                                             <div class="product-card-placeholder">
@@ -188,13 +200,13 @@
                                         <span class="product-card-overlay">{{ __('products.view_detail') }} <i class="icon-chevron-right"></i></span>
                                     </a>
                                     <div class="product-card-body">
-                                        @if($product->brand)
-                                        <span class="product-card-brand">{{ $product->brand->name }}</span>
-                                        @endif
+                                        <span class="product-card-brand {{ $product->brand ? '' : 'is-empty' }}">
+                                            {{ $product->brand?->name }}
+                                        </span>
                                         <h3 class="product-card-title">
-                                            <a href="{{ route('products.show', $product->slug_tr) }}">{{ $productName }}</a>
+                                            <a href="{{ route($productsShowRoute, $product->{$slugField} ?? $product->slug_tr) }}">{{ $productName }}</a>
                                         </h3>
-                                        <a href="{{ route('products.show', $product->slug_tr) }}" class="product-card-link">
+                                        <a href="{{ route($productsShowRoute, $product->{$slugField} ?? $product->slug_tr) }}" class="product-card-link">
                                             {{ __('products.view_detail') }} <i class="icon-chevron-right"></i>
                                         </a>
                                     </div>
@@ -211,7 +223,7 @@
                         <span class="products-empty-icon"><i class="icon-layers"></i></span>
                         <h3>{{ __('products.empty_title') }}</h3>
                         <p>{{ __('products.empty_desc') }}</p>
-                        <a href="{{ route('products.index') }}" class="btn btn-primary">{{ __('products.go_all') }}</a>
+                        <a href="{{ route($productsIndexRoute) }}" class="btn btn-primary">{{ __('products.go_all') }}</a>
                     </div>
                 @endif
             </div>
@@ -362,17 +374,33 @@
         position: absolute;
         inset: 0;
     }
-    .product-card-image-hover {
+    .product-card-image-slide {
         position: absolute;
         inset: 0;
         opacity: 0;
         z-index: 1;
     }
-    .product-card-media:hover .product-card-image-hover {
+    .product-card-image-slide.is-initial {
         opacity: 1;
     }
-    .product-card-media:hover .product-card-image-main:not(.product-card-image-hover) {
+    .product-card-media:hover .product-card-image-slide {
+        animation-name: productCardImageCycle;
+        animation-duration: calc(var(--slide-count) * 1.3s);
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        animation-delay: calc(var(--slide-index) * 1.3s);
+    }
+    .product-card-media:hover .product-card-image-main,
+    .product-card-media:hover .product-card-image-slide {
         transform: scale(1.03);
+    }
+    @keyframes productCardImageCycle {
+        0%, 12% {
+            opacity: 1;
+        }
+        20%, 100% {
+            opacity: 0;
+        }
     }
     .product-card-placeholder {
         display: flex;
@@ -417,13 +445,17 @@
         padding: 18px 20px 20px;
     }
     .product-card-brand {
-        display: inline-block;
+        display: block;
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--home-accent);
         margin-bottom: 8px;
+        min-height: 16px;
+    }
+    .product-card-brand.is-empty {
+        visibility: hidden;
     }
     .product-card-title {
         font-size: 17px;
