@@ -15,6 +15,7 @@ return [
     'address' => 'Address',
     'hours' => 'Working Hours',
     'whatsapp' => 'WhatsApp',
+    'whatsapp_default_message' => 'Hello',
 
     'form_name' => 'Full Name',
     'form_email' => 'Email',
