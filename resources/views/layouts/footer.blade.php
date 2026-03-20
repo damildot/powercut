@@ -2,20 +2,31 @@
 
 <style>
 /* Footer social icons fix */
+#footer .social-icons {
+  width: 100%;
+  text-align: left !important;
+}
 #footer .social-icons ul {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start !important;
+  justify-content: flex-start;
   gap: 10px;
   flex-wrap: wrap;
   max-width: 100%;
 }
-#footer .social-icons {
-  text-align: left !important;
-  justify-content: flex-start !important;
+#footer .social-icons li {
+  float: none;
+  flex: 0 0 auto;
+}
+#footer .social-icons li a {
+  float: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
 /* Footer responsive - mobil uyumluluk */
@@ -66,6 +77,14 @@
     display: inline-block;
     padding: 4px 0;
   }
+  #footer .social-icons ul {
+    gap: 8px;
+  }
+  #footer .social-icons li a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
 }
 @media (max-width: 575px) {
   #footer .footer-content {
@@ -79,6 +98,7 @@
 
 @php
     $isEn = app()->getLocale() === 'en';
+    $homeUrl = $isEn ? route('home.en') : route('home');
     $footerDescription = $isEn
         ? ($settings->seo_description_en ?? __('footer.default_description'))
         : ($settings->seo_description_tr ?? __('footer.default_description'));
@@ -93,11 +113,15 @@
                 <div class="col-12 col-md-6 col-xl-3 col-lg-3">
                     <div class="widget">
                         @if(!empty($settings->logo_light))
-                            <a href="{{ url('/') }}">
-                                <img src="{{ asset('storage/' . $settings->logo_light) }}" 
-                                     alt="{{ $settings->site_title ?? 'POWERCUT' }}" 
-                                     class="footer-logo" 
-                                     style="max-height: 150px; max-width: 250px; width: auto; margin-bottom: 25px; display: block;">
+                            <a href="{{ $homeUrl }}">
+                                <x-webp-image
+                                    :src="asset('storage/' . $settings->logo_light)"
+                                    :alt="$settings->site_title ?? 'POWERCUT'"
+                                    loading="lazy"
+                                    decoding="async"
+                                    class="footer-logo"
+                                    style="max-height: 150px; max-width: 250px; width: auto; margin-bottom: 25px; display: block;"
+                                />
                             </a>
                         @else
                             <h4 class="text-white mb-3">{{ $settings->site_title ?? 'POWERCUT' }}</h4>
@@ -110,23 +134,23 @@
                         <div class="mb-4 social-icons social-icons-medium social-icons-colored-hover">
                             <ul>
                                 @if(!empty($settings->facebook))
-                                <li class="social-facebook"><a href="{{ $settings->facebook }}" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i></a></li>
+                                <li class="social-facebook"><a href="{{ $settings->facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a></li>
                                 @endif
                                 
                                 @if(!empty($settings->instagram))
-                                <li class="social-instagram"><a href="{{ $settings->instagram }}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a></li>
+                                <li class="social-instagram"><a href="{{ $settings->instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                                 @endif
     
                                 @if(!empty($settings->whatsapp_phone))
-                                <li class="social-whatsapp"><a href="https://wa.me/{{ $settings->whatsapp_phone }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i></a></li>
+                                <li class="social-whatsapp"><a href="https://wa.me/{{ $settings->whatsapp_phone }}" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></li>
                                 @endif
     
                               {{--  @if(!empty($settings->email))
-                                <li class="social-email"><a href="mailto:{{ $settings->email }}" target="_blank" rel="noopener"><i class="icon-mail"></i></a></li>
+                                <li class="social-email"><a href="mailto:{{ $settings->email }}" target="_blank" rel="noopener" aria-label="E-posta"><i class="icon-mail"></i></a></li>
                                 @endif  --}}
     
                                 @if(!empty($settings->google_maps_embed))
-                                <li class="social-google"><a href="{{ $settings->google_maps_embed }}" target="_blank" rel="noopener"><i class="fab fa-google"></i></a></li>
+                                <li class="social-google"><a href="https://share.google/A9E3fmZ3NRHUiyABA" target="_blank" rel="noopener" aria-label="Google Maps"><i class="fab fa-google"></i></a></li>
                                 @endif
                                 
                             </ul>
@@ -142,7 +166,7 @@
                           <!-- <li><a href="{{ url('/') }}">Anasayfa</a></li> -->
                             <li><a href="{{ $isEn ? route('about.en.index') : route('about.index') }}">{{ __('footer.about') }}</a></li>
                             <li><a href="{{ $isEn ? route('privacy.en') : route('privacy') }}">{{ __('footer.privacy_policy') }}</a></li>
-                            <li><a href="{{ url('/kvkk') }}">KVKK</a></li>
+                            <li><a href="{{ $isEn ? route('kvkk.en') : route('kvkk') }}">KVKK</a></li>
                             <li><a href="{{ $isEn ? route('blog.en.index') : route('blog.index') }}">{{ __('footer.blog') }}</a></li>
                         </ul>
                     </div>
