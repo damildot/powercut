@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/powercut/public_html
+    - /bin/mkdir -p $DEPLOYPATH/lang/en
+    - /bin/cp $CPANEL_BASE_DIR/lang/en/kvkk.php $DEPLOYPATH/lang/en/kvkk.php
