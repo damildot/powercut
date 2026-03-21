@@ -33,9 +33,9 @@ jobs:
           set ssl:verify-certificate no
           set ftp:passive-mode true
           open -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$FTP_PORT" "$FTP_HOST"
-          mkdir -p /resources/views/layouts
-          put resources/views/layouts/header.blade.php -o /resources/views/layouts/header.blade.php
-          glob -a rm -f /storage/framework/views/*.php
+          mkdir -p resources/views/layouts
+          put resources/views/layouts/header.blade.php -o resources/views/layouts/header.blade.php
+          glob -a rm -f storage/framework/views/*.php
           bye
           EOF
 
