@@ -32,13 +32,16 @@ jobs:
           cat > deploy.lftp <<EOF
           set ssl:verify-certificate no
           set ftp:passive-mode true
+          set ftp:prefer-epsv true
+          set ftp:use-pret false
+          set net:timeout 20
+          set net:max-retries 1
           open -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$FTP_PORT" "$FTP_HOST"
-          pwd
-          cls
-          mkdir -p resources/views/layouts
           put resources/views/layouts/header.blade.php -o resources/views/layouts/header.blade.php
-          glob -a rm -f storage/framework/views/*.php
           bye
+          EOF
+
+          lftp -f deploy.lftp
           EOF
 
           lftp -d -f deploy.lftp
