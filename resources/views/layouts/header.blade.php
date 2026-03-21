@@ -161,8 +161,8 @@
     $categorySlugField = $isEn ? 'slug_en' : 'slug_tr';
     $categoryNameField = $isEn ? 'name_en' : 'name_tr';
 
-    $trSwitchUrl = url('/iletisim');
-    $enSwitchUrl = url('/en/contact');
+    $trSwitchUrl = route('home');
+    $enSwitchUrl = route('home.en');
 
     $currentRouteName = \Illuminate\Support\Facades\Route::currentRouteName();
 
@@ -212,6 +212,15 @@
 
         $trSwitchUrl = route('products.show', ['slug' => $product?->slug_tr ?? $slug]);
         $enSwitchUrl = route('products.en.show', ['slug' => $product?->slug_en ?? $product?->slug_tr ?? $slug]);
+    } elseif (in_array($currentRouteName, ['kvkk', 'kvkk.en'], true)) {
+        $trSwitchUrl = route('kvkk');
+        $enSwitchUrl = route('kvkk.en');
+    } elseif (in_array($currentRouteName, ['privacy', 'privacy.en'], true)) {
+        $trSwitchUrl = route('privacy');
+        $enSwitchUrl = route('privacy.en');
+    } elseif (in_array($currentRouteName, ['contact.index', 'contact.index.tr', 'contact.index.locale'], true)) {
+        $trSwitchUrl = route('contact.index.tr');
+        $enSwitchUrl = route('contact.index.locale', ['locale' => 'en']);
     }
 
     $blogRoutePrefix = $isEn ? 'blog.en.' : 'blog.';
