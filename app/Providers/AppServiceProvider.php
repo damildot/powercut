@@ -65,5 +65,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('contact', function ($request) {
             return Limit::perMinute(5)->by($request->ip());
         });
+
+        // Diagnostic route rate limit
+        RateLimiter::for('diagnostic', function ($request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
     }
 }
