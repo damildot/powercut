@@ -2,12 +2,7 @@
 deployment:
   tasks:
     - export APPROOT=/home/powercut
-    - /bin/mkdir -p $APPROOT/lang/en
-    - /bin/cp $CPANEL_BASE_DIR/lang/en/kvkk.php $APPROOT/lang/en/kvkk.php
-    - /bin/mkdir -p $APPROOT/resources/views/layouts
-    - /bin/cp $CPANEL_BASE_DIR/resources/views/layouts/header.blade.php $APPROOT/resources/views/layouts/header.blade.php
     - /bin/mkdir -p $APPROOT/routes
     - /bin/cp $CPANEL_BASE_DIR/routes/web.php $APPROOT/routes/web.php
     - /bin/mkdir -p $APPROOT/app/Providers
     - /bin/cp $CPANEL_BASE_DIR/app/Providers/AppServiceProvider.php $APPROOT/app/Providers/AppServiceProvider.php
-    - /bin/rm -rf $APPROOT/storage/framework/views/*.php
