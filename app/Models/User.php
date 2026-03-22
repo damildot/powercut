@@ -48,14 +48,11 @@ class User extends Authenticatable implements FilamentUser
 
     /**
      * Allow access to Filament panels.
-     * Authorized emails are defined in ADMIN_EMAILS (.env), comma-separated.
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        $allowed = array_filter(
-            array_map('trim', explode(',', env('ADMIN_EMAILS', '')))
-        );
-
-        return in_array($this->email, $allowed, true);
+        // Allow ALL users to log into admin panel.
+        // Later we can change this.
+        return true;
     }
 }
