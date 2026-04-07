@@ -70,10 +70,10 @@
     @if(!empty($sliderData) && is_array($sliderData))
         @php $firstSlide = $sliderData[0] ?? null; @endphp
         @if(is_array($firstSlide) && ($firstSlide['type'] ?? '') === 'image' && !empty($firstSlide['image_path']))
-            <link rel="preload" as="image" href="{{ asset('storage/' . $firstSlide['image_path']) }}">
+            <link rel="preload" as="image" href="{{ asset('storage/' . $firstSlide['image_path']) }}" fetchpriority="high">
         @endif
     @else
-        <link rel="preload" as="image" href="{{ asset('assets/images/blog/blog-banner.webp') }}">
+        <link rel="preload" as="image" href="{{ asset('assets/images/blog/blog-banner.webp') }}" fetchpriority="high">
     @endif
 @endpush
 

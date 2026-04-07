@@ -3,6 +3,7 @@
     'alt' => '',
     'loading' => null,
     'decoding' => null,
+    'fetchpriority' => null,
 ])
 
 @php
@@ -32,8 +33,9 @@
     <img
         src="{{ $src }}"
         alt="{{ $alt }}"
-        @if($loading) loading="{{ $loading }}" @endif
-        @if($decoding) decoding="{{ $decoding }}" @endif
+        loading="{{ $loading ?? 'lazy' }}"
+        decoding="{{ $decoding ?? 'async' }}"
+        @if($fetchpriority) fetchpriority="{{ $fetchpriority }}" @endif
         {{ $attributes }}
     >
 </picture>
@@ -41,8 +43,9 @@
 <img
     src="{{ $src }}"
     alt="{{ $alt }}"
-    @if($loading) loading="{{ $loading }}" @endif
-    @if($decoding) decoding="{{ $decoding }}" @endif
+    loading="{{ $loading ?? 'lazy' }}"
+    decoding="{{ $decoding ?? 'async' }}"
+    @if($fetchpriority) fetchpriority="{{ $fetchpriority }}" @endif
     {{ $attributes }}
 >
 @endif
