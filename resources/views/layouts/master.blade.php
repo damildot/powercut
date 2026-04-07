@@ -315,9 +315,10 @@
     </div>
     
     {{-- Polo JS: defer = parse sırasında indirilir, sıra korunur (jQuery → plugins → functions), DOMContentLoaded bütün defer’lerden sonra --}}
-    <script src="{{ asset('assets/polo/js/jquery.js') }}?v={{ $poloAssetV('assets/polo/js/jquery.js') }}" defer></script>
-    <script src="{{ asset('assets/polo/js/plugins.js') }}?v={{ $poloAssetV('assets/polo/js/plugins.js') }}" defer></script>
-    <script src="{{ asset('assets/polo/js/functions.js') }}?v={{ $poloAssetV('assets/polo/js/functions.js') }}" defer></script>
+    {{-- NOTE: Some cPanel/WAF setups may block querystringed static JS (415). Keep these URLs clean. --}}
+    <script src="{{ asset('assets/polo/js/jquery.js') }}" defer></script>
+    <script src="{{ asset('assets/polo/js/plugins.js') }}" defer></script>
+    <script src="{{ asset('assets/polo/js/functions.js') }}" defer></script>
     
     {{-- Custom --}}
     <script>
